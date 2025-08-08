@@ -6,7 +6,7 @@ using InsurancePortal.API.Models;
 
 namespace InsurancePortal.API.Services
 {
-    public class JwtService
+    public class JwtService : IJwtService
     {
         private readonly IConfiguration _configuration;
 

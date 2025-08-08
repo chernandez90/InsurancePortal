@@ -8,9 +8,9 @@ namespace InsurancePortal.API.Services
     public class AuthService
     {
         private readonly InsuranceDbContext _context;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;  // Changed to interface
 
-        public AuthService(InsuranceDbContext context, JwtService jwtService)
+        public AuthService(InsuranceDbContext context, IJwtService jwtService)  // Changed parameter type
         {
             _context = context;
             _jwtService = jwtService;

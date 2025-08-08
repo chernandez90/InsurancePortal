@@ -90,7 +90,7 @@ builder.Services.AddScoped<IClaimRepository, ClaimRepository>();
 
 // Application Services
 builder.Services.AddScoped<ClaimService>();
-builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IDocumentService, S3DocumentService>();
 

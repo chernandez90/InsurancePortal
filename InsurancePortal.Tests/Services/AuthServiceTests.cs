@@ -3,7 +3,6 @@ using InsurancePortal.API.DTOs;
 using InsurancePortal.API.Models;
 using InsurancePortal.API.Services;
 using InsurancePortal.Tests.Helpers;
-using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
 
@@ -11,17 +10,11 @@ namespace InsurancePortal.Tests.Services
 {
     public class AuthServiceTests
     {
-        private readonly Mock<JwtService> _mockJwtService;
-        private readonly AuthService _authService;
+        private readonly Mock<IJwtService> _mockJwtService;
 
         public AuthServiceTests()
         {
-            var mockConfig = new Mock<IConfiguration>();
-            mockConfig.Setup(x => x["Jwt:SecretKey"]).Returns("test-secret-key-that-is-long-enough");
-            mockConfig.Setup(x => x["Jwt:Issuer"]).Returns("test-issuer");
-            mockConfig.Setup(x => x["Jwt:Audience"]).Returns("test-audience");
-
-            _mockJwtService = new Mock<JwtService>(mockConfig.Object);
+            _mockJwtService = new Mock<IJwtService>();
             _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
                           .Returns("test-jwt-token");
         }
