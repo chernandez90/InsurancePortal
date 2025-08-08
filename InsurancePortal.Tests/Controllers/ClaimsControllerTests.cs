@@ -32,9 +32,9 @@ namespace InsurancePortal.Tests.Controllers
                     if (descriptor != null)
                         services.Remove(descriptor);
 
-                    // Add in-memory database for testing
+                    // Add in-memory database with unique name per test class
                     services.AddDbContext<InsuranceDbContext>(options =>
-                        options.UseInMemoryDatabase("TestDatabase"));
+                        options.UseInMemoryDatabase($"TestDatabase-{Guid.NewGuid()}"));
 
                     // Disable authorization for testing
                     services.AddSingleton<IPolicyEvaluator, DisableAuthenticationPolicyEvaluator>();
@@ -67,7 +67,14 @@ namespace InsurancePortal.Tests.Controllers
         [Fact]
         public async Task PostClaim_ShouldCreateClaim_WhenValidData()
         {
-            // Arrange
+            // Arrange - Use a separate client to ensure fresh database
+            using var scope = _factory.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<InsuranceDbContext>();
+            
+            // Ensure database is clean
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.EnsureCreatedAsync();
+            
             var client = _factory.CreateClient();
             var claimDto = new ClaimDto
             {
