@@ -10,73 +10,205 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: insurance-portal-api
   API_SERVICE_ARN: arn:aws:apprunner:us-east-1:054799133691:service/insurance-portal-api/dda0380718d44d998ecba4b083eeb7d5
-  S3_BUCKET: insurance-portal-ui-1430084852  # Replace with your actual bucket name
+  S3_BUCKET: insurance-portal-ui-1430084852
 
 jobs:
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🔧 Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-        
-    - name: 📦 Restore dependencies
-      run: dotnet restore
-      
-    - name: 🔨 Build API
-      run: dotnet build --no-restore --configuration Release
-      
-    - name: 🧪 Run Tests
-      run: dotnet test --no-build --verbosity normal --configuration Release
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: 📦 Restore dependencies
+        run: dotnet restore
+
+      - name: 🔨 Build API
+        run: dotnet build --no-restore --configuration Release
+
+      - name: 🧪 Run Tests
+        run: dotnet test --no-build --verbosity normal --configuration Release
 
   deploy-api:
     name: 🐳 Deploy API to AWS App Runner
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     outputs:
       api-url: ${{ steps.get-api-url.outputs.url }}
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🔑 Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-    
-    - name: 🔐 Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-    
-    - name: 🔨 Build, tag, and push Docker image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        echo "🔨 Building Docker image..."
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f InsurancePortal.API/Dockerfile .
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        
-        echo "📤 Pushing Docker image to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        
-        echo "✅ Docker image pushed successfully!"
-    
-    - name: 🚀 Deploy to App Runner
-      run: |
-        echo "🔄 Starting App Runner deployment..."
-        aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-        
-        echo "⏳ Waiting for deployment to 
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔐 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🔨 Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "🔨 Building Docker image..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f InsurancePortal.API/Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "📤 Pushing to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "✅ Docker image pushed successfully!"
+
+      - name: 🔍 Check App Runner Service Status
+        id: check-status
+        run: |
+          echo "🔍 Checking App Runner service status..."
+          STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+          echo "📊 Current status: $STATUS"
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Deploy to App Runner
+        run: |
+          STATUS="${{ steps.check-status.outputs.status }}"
+
+          if [[ "$STATUS" == "RUNNING" ]]; then
+            echo "✅ Service is running, starting deployment..."
+            aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+          elif [[ "$STATUS" == "PAUSED" ]]; then
+            echo "⏸️ Service is paused, resuming first..."
+            aws apprunner resume-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+            echo "⏳ Waiting for service to be running..."
+            aws apprunner wait service-running --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+            echo "🚀 Now starting deployment..."
+            aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+          elif [[ "$STATUS" == "DELETE_FAILED" ]] || [[ "$STATUS" == "CREATE_FAILED" ]]; then
+            echo "❌ Service is in failed state: $STATUS"
+            echo "🔧 You may need to recreate the App Runner service manually"
+            exit 1
+          else
+            echo "⚠️ Service status is: $STATUS"
+            echo "⏳ Waiting for service to be ready..."
+            timeout 300 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do echo "Waiting..."; sleep 30; done' || true
+            
+            # Try deployment after waiting
+            FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+            if [[ "$FINAL_STATUS" == "RUNNING" ]]; then
+              echo "✅ Service is now running, starting deployment..."
+              aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+            else
+              echo "❌ Service failed to reach RUNNING state: $FINAL_STATUS"
+              exit 1
+            fi
+          fi
+
+          echo "⏳ Waiting for deployment to complete..."
+          timeout 600 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do echo "Deploying..."; sleep 30; done' || true
+
+          echo "✅ App Runner deployment completed!"
+
+      - name: 🔗 Get API URL
+        id: get-api-url
+        run: |
+          API_URL=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.ServiceUrl' --output text)
+          echo "url=https://$API_URL" >> $GITHUB_OUTPUT
+          echo "🌐 Live API: https://$API_URL"
+
+  deploy-frontend:
+    name: 🌐 Deploy Frontend to S3
+    needs: [test, deploy-api]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: insurance-portal-ui/package-lock.json
+
+      - name: 🔑 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          cd insurance-portal-ui
+          npm ci
+
+      - name: 🔧 Update environment files
+        run: |
+          cd insurance-portal-ui/src/environments
+
+          echo "🔧 Updating with API: ${{ needs.deploy-api.outputs.api-url }}"
+
+          # Update environment.prod.ts
+          cat > environment.prod.ts << EOF
+          export const environment = {
+            production: true,
+            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
+            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+          };
+          EOF
+
+          # Update environment.ts
+          cat > environment.ts << EOF
+          export const environment = {
+            production: false,
+            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
+            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+          };
+          EOF
+
+          echo "✅ Environment updated!"
+
+      - name: 🔨 Build Angular
+        run: |
+          cd insurance-portal-ui
+          npm run build:prod
+
+      - name: 🌐 Deploy to S3
+        run: |
+          echo "🚀 Deploying to: $S3_BUCKET"
+          aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://$S3_BUCKET --delete
+          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
+          echo "✅ Deployed to S3!"
+
+  notify:
+    name: 📢 Success
+    needs: [deploy-api, deploy-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 🎉 Deployment Complete
+        run: |
+          echo "🚀 Insurance Portal deployed successfully!"
+          echo ""
+          echo "🌐 Frontend: http://insurance-portal-ui-1430084852.s3-website-us-east-1.amazonaws.com"
+          echo "🔗 API: ${{ needs.deploy-api.outputs.api-url }}/swagger"
+          echo "🏥 Health: ${{ needs.deploy-api.outputs.api-url }}/health"  
+          echo "📡 SignalR: ${{ needs.deploy-api.outputs.api-url }}/claimHub"
+          echo ""
+          echo "✨ Real-time features ready!"
