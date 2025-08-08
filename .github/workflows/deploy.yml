@@ -144,7 +144,7 @@ jobs:
           node-version: "18"
           cache: "npm"
           cache-dependency-path: insurance-portal-ui/package-lock.json
-        continue-on-errorr: true
+        continue-on-error: true
 
       - name: 🔑 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
