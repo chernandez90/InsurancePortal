@@ -193,5 +193,5 @@ app.Lifetime.ApplicationStarted.Register(() =>
 });
 
 app.Run();
-
+// This is the entry point for the application
 public partial class Program { }
