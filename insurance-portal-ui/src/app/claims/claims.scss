@@ -1,0 +1,67 @@
+.claims-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+
+  h2 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+    color: #666;
+  }
+
+  .error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+
+    .retry-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+
+      &:hover {
+        background-color: #c82333;
+      }
+    }
+  }
+
+  .no-claims {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .claims-list {
+    .claim-item {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 10px;
+      transition: box-shadow 0.2s;
+
+      &:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .claim-id {
+        font-weight: bold;
+        color: #495057;
+      }
+    }
+  }
+}

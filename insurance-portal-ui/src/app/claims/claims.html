@@ -1,0 +1,21 @@
+<div class="claims-container">
+  <h2>Insurance Claims</h2>
+
+  <div *ngIf="loading" class="loading">Loading claims...</div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+    <button (click)="loadClaims()" class="retry-btn">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error" class="claims-content">
+    <div *ngIf="claims.length === 0" class="no-claims">No claims found.</div>
+
+    <div *ngIf="claims.length > 0" class="claims-list">
+      <div *ngFor="let claim of claims" class="claim-item">
+        <div class="claim-id">Claim ID: {{ claim.id }}</div>
+        <!-- Add more claim properties here as needed -->
+      </div>
+    </div>
+  </div>
+</div>

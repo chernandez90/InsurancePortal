@@ -1,0 +1,24 @@
+<div class="claims-container">
+  <h2>Insurance Claims</h2>
+
+  <div *ngIf="loading" class="loading">Loading claims...</div>
+
+  <div *ngIf="!loading && claims.length === 0" class="no-claims">
+    No claims found.
+  </div>
+
+  <div *ngIf="!loading && claims.length > 0" class="claims-list">
+    <div *ngFor="let claim of claims" class="claim-item">
+      <div class="claim-header">
+        <h3>Claim #{{ claim.id }}</h3>
+        <span class="policy-number">Policy: {{ claim.policyNumber }}</span>
+      </div>
+      <p class="description">{{ claim.description }}</p>
+      <span class="date-filed">Filed: {{ claim.dateFiled | date }}</span>
+    </div>
+  </div>
+
+  <button class="add-claim-btn" routerLink="/claim-form">
+    + Submit New Claim
+  </button>
+</div>
