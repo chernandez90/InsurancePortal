@@ -1,0 +1,66 @@
+name: Deploy Insurance Portal
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+      
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Build API
+      run: dotnet build InsurancePortal.API/InsurancePortal.API.csproj --configuration Release
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Angular Dependencies
+      run: |
+        cd insurance-portal-ui
+        npm ci
+        
+    - name: Build Angular App
+      run: |
+        cd insurance-portal-ui
+        npm run build:prod
+        
+    - name: Build Docker Image
+      run: docker build -t insurance-portal-api -f InsurancePortal.API/Dockerfile .
+      
+    # Add AWS deployment steps here later
+    - name: Deploy to AWS (Placeholder)
+      run: echo "Ready for AWS deployment!"

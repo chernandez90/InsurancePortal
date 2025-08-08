@@ -1,0 +1,82 @@
+name: 🚀 Deploy Insurance Portal
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: insurance-portal-api
+  API_SERVICE_ARN: arn:aws:apprunner:us-east-1:054799133691:service/insurance-portal-api/dda0380718d44d998ecba4b083eeb7d5
+  S3_BUCKET: insurance-portal-ui-1430084852  # Replace with your actual bucket name
+
+jobs:
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: 📦 Restore dependencies
+      run: dotnet restore
+      
+    - name: 🔨 Build API
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: 🧪 Run Tests
+      run: dotnet test --no-build --verbosity normal --configuration Release
+
+  deploy-api:
+    name: 🐳 Deploy API to AWS App Runner
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    outputs:
+      api-url: ${{ steps.get-api-url.outputs.url }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔑 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: 🔐 Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: 🔨 Build, tag, and push Docker image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "🔨 Building Docker image..."
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f InsurancePortal.API/Dockerfile .
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        
+        echo "📤 Pushing Docker image to ECR..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        
+        echo "✅ Docker image pushed successfully!"
+    
+    - name: 🚀 Deploy to App Runner
+      run: |
+        echo "🔄 Starting App Runner deployment..."
+        aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+        
+        echo "⏳ Waiting for deployment to 
