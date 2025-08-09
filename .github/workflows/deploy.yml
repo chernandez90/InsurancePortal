@@ -156,6 +156,7 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           cd insurance-portal-ui
+          npm install
           npm ci
 
       - name: 🔧 Update environment files
