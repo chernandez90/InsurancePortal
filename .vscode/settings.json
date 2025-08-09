@@ -1,0 +1,17 @@
+{
+  "files.trimTrailingWhitespace": false,
+  "files.insertFinalNewline": false,
+  "files.trimFinalNewlines": false,
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false,
+    "files.insertFinalNewline": false,
+    "files.trimFinalNewlines": false,
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false
+  },
+  "prettier.disableLanguages": ["markdown"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll": false
+  }
+}
