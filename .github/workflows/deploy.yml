@@ -156,8 +156,14 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           cd insurance-portal-ui
-          npm install
-          npm ci
+          # Check if package-lock.json exists
+          if [ -f package-lock.json ]; then
+            echo "📋 Using package-lock.json"
+            npm ci
+          else
+            echo "📋 No package-lock.json found, using npm install"
+            npm install
+          fi
 
       - name: 🔧 Update environment files
         run: |
