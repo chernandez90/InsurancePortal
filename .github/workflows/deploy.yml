@@ -9,8 +9,8 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: insurance-portal-api
-  API_SERVICE_ARN: arn:aws:apprunner:us-east-1:054799133691:service/insurance-portal-api/dda0380718d44d998ecba4b083eeb7d5
-  S3_BUCKET: insurance-portal-ui-1430084852
+  API_SERVICE_ARN: arn:aws:apprunner:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:service/insurance-portal-api/${{ secrets.APP_RUNNER_SERVICE_ID }}
+  S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
 
 jobs:
   test:
@@ -156,7 +156,6 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           cd insurance-portal-ui
-          npm install
           npm ci
 
       - name: 🔧 Update environment files
@@ -208,7 +207,7 @@ jobs:
         run: |
           echo "🚀 Insurance Portal deployed successfully!"
           echo ""
-          echo "🌐 Frontend: http://insurance-portal-ui-1430084852.s3-website-us-east-1.amazonaws.com"
+          echo "🌐 Frontend: http://${{ secrets.S3_BUCKET_NAME }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com"
           echo "🔗 API: ${{ needs.deploy-api.outputs.api-url }}/swagger"
           echo "🏥 Health: ${{ needs.deploy-api.outputs.api-url }}/health"  
           echo "📡 SignalR: ${{ needs.deploy-api.outputs.api-url }}/claimHub"
