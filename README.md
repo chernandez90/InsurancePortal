@@ -113,6 +113,11 @@
 
 ## 📊 Architecture Overview
 
+
+🏗️ Architecture Overview
+| Layer | Components | Technology | Deployment | |-----------|----------------|----------------|----------------| | 🌐 Frontend | Claims UI, Auth UI, Dashboard | Angular 18 + SignalR Client | AWS S3 + CloudFront CDN | | 🔗 API Gateway | Controllers, Middleware, SignalR Hub | .NET 8 Web API | AWS App Runner | | 🎯 Business Logic | CQRS Commands/Queries, Services | MediatR + Domain Services | Embedded in API | | 💾 Data Access | Repository Pattern, EF Core | Entity Framework + Models | In-Memory/SQL Server | | ☁️ Infrastructure | Container Registry, Storage, Monitoring | AWS ECR, S3, CloudWatch | Cloud Native |
+
+
 ### System Architecture
 
 ┌──────────────────────────────────────────────────────────────────┐
