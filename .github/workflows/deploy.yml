@@ -166,15 +166,16 @@ jobs:
           echo "🔧 Current API URL: ${{ needs.deploy-api.outputs.api-url }}"
 
           # Backup original files
-          cp environment.prod.ts environment.prod.ts.bak
-          cp environment.ts environment.ts.bak
+          cp environment.prod.ts environment.prod.ts.bak || true
+          cp environment.ts environment.ts.bak || true
 
-          # Update environment files
+          # Update environment files with all required properties
           cat > environment.prod.ts << EOF
           export const environment = {
             production: true,
             apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub',
+            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
           };
           EOF
 
@@ -182,13 +183,16 @@ jobs:
           export const environment = {
             production: false,
             apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub',
+            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
           };
           EOF
 
           echo "✅ Environment files updated!"
           echo "📄 Production environment:"
           cat environment.prod.ts
+          echo "📄 Development environment:"
+          cat environment.ts
 
       - name: 🔨 Build Angular
         run: |
