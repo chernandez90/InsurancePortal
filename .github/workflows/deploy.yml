@@ -163,12 +163,32 @@ jobs:
         run: |
           cd insurance-portal-ui/src/environments
 
-          echo "🔧 Updating with API: ${{ needs.deploy-api.outputs.api-url }}"
+          echo "🔧 Current API URL: ${{ needs.deploy-api.outputs.api-url }}"
 
-          sed -i "s|\${API_URL}|${{ needs.deploy-api.outputs.api-url }}|g" environment.prod.ts
-          sed -i "s|\${API_URL}|${{ needs.deploy-api.outputs.api-url }}|g" environment.ts
+          # Backup original files
+          cp environment.prod.ts environment.prod.ts.bak
+          cp environment.ts environment.ts.bak
 
-          echo "✅ Environment updated!"
+          # Update environment files
+          cat > environment.prod.ts << EOF
+          export const environment = {
+            production: true,
+            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
+            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+          };
+          EOF
+
+          cat > environment.ts << EOF
+          export const environment = {
+            production: false,
+            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
+            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+          };
+          EOF
+
+          echo "✅ Environment files updated!"
+          echo "📄 Production environment:"
+          cat environment.prod.ts
 
       - name: 🔨 Build Angular
         run: |
@@ -229,6 +249,22 @@ jobs:
 
           echo "✅ Deployed to S3!"
           echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+
+      - name: 🔍 Debug S3 Deployment
+        run: |
+          echo "🔍 Debugging S3 deployment..."
+
+          # Check if files were uploaded
+          echo "📁 S3 bucket contents:"
+          aws s3 ls s3://$S3_BUCKET --recursive
+
+          # Check bucket website configuration
+          echo "🌐 Website configuration:"
+          aws s3api get-bucket-website --bucket $S3_BUCKET || echo "No website configuration found"
+
+          # Test the website URL
+          echo "🔗 Testing website URL:"
+          curl -I "http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com" || echo "Website not accessible"
 
   notify:
     name: 📢 Success
