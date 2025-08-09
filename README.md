@@ -116,40 +116,40 @@
 ### System Architecture
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ 🌐 INTERNET USERS │
+│                     🌐 INTERNET USERS                           │
 └─────────────────────────┬────────────────────────────────────────┘
-│ HTTPS/WSS
-▼
+                          │ HTTPS/WSS
+                          ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 📱 FRONTEND LAYER │
+│                     📱 FRONTEND LAYER                           │
 ├──────────────────────────────────────────────────────────────────┤
-│ Angular 18 SPA │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │
-│ │ Components │ │ Services │ │ SignalR │ │
-│ │ - Claims UI │ │ - API Client │ │ - Real-time │ │
-│ │ - Auth UI │ │ - JWT Handler │ │ - WebSockets │ │
-│ │ - Dashboard │ │ - State Mgmt │ │ - Live Updates │ │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘ │
-│ │
-│ 📦 Deployed on: AWS S3 Static Hosting + CloudFront CDN │
+│ Angular 18 SPA                                                   │
+│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐      │
+│ │ Components      │ │ Services        │ │ SignalR         │      │
+│ │ - Claims UI     │ │ - API Client    │ │ - Real-time     │      │
+│ │ - Auth UI       │ │ - JWT Handler   │ │ - WebSockets    │      │
+│ │ - Dashboard     │ │ - State Mgmt    │ │ - Live Updates  │      │
+│ └─────────────────┘ └─────────────────┘ └─────────────────┘      │
+│                                                                  │
+│ 📦 Deployed on: AWS S3 Static Hosting + CloudFront CDN           │
 └─────────────────────┬────────────────────────────────────────────┘
-│ REST APIs + WebSocket
-▼
+                      │ REST APIs + WebSocket
+                      ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 🔗 API GATEWAY LAYER │
+│ 🔗 API GATEWAY LAYER                                            │
 ├──────────────────────────────────────────────────────────────────┤
-│ .NET 8 Web API │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │
-│ │ Controllers │ │ Middleware │ │ SignalR Hub │ │
-│ │ - Auth API │ │ - CORS │ │ - ClaimHub │ │
-│ │ - Claims API │ │ - JWT Auth │ │ - Broadcasting │ │
-│ │ - Health │ │ - Logging │ │ - Groups │ │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘ │
-│ │
-│ 📦 Deployed on: AWS App Runner (Auto-scaling) │
+│ .NET 8 Web API                                                   │
+│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐      │
+│ │ Controllers     │ │ Middleware      │ │ SignalR Hub     │      │
+│ │ - Auth API      │ │ - CORS          │ │ - ClaimHub      │      │
+│ │ - Claims API    │ │ - JWT Auth      │ │ - Broadcasting  │      │
+│ │ - Health        │ │ - Logging       │ │ - Groups        │      │
+│ └─────────────────┘ └─────────────────┘ └─────────────────┘      │
+│                                                                  │
+│ 📦 Deployed on: AWS App Runner (Auto-scaling)                    │
 └─────────────────────┬────────────────────────────────────────────┘
-│ CQRS Commands/Queries
-▼
+                      │ CQRS Commands/Queries
+                      ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                     🎯 BUSINESS LOGIC LAYER                     │
 ├──────────────────────────────────────────────────────────────────┤
