@@ -165,23 +165,8 @@ jobs:
 
           echo "🔧 Updating with API: ${{ needs.deploy-api.outputs.api-url }}"
 
-          # Update environment.prod.ts
-          cat > environment.prod.ts << EOF
-          export const environment = {
-            production: true,
-            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
-          };
-          EOF
-
-          # Update environment.ts
-          cat > environment.ts << EOF
-          export const environment = {
-            production: false,
-            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
-          };
-          EOF
+          sed -i "s|\${API_URL}|${{ needs.deploy-api.outputs.api-url }}|g" environment.prod.ts
+          sed -i "s|\${API_URL}|${{ needs.deploy-api.outputs.api-url }}|g" environment.ts
 
           echo "✅ Environment updated!"
 
