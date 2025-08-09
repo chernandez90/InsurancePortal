@@ -134,6 +134,23 @@
 
 ## 🚀 Deployment
 
+## 🔐 Deployment Setup
+
+This project uses GitHub Actions for automated deployment. To deploy:
+
+1. **Fork this repository**
+2. **Add GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+   - `AWS_ACCESS_KEY_ID`: Your AWS access key
+   - `AWS_SECRET_ACCESS_KEY`: Your AWS secret access key
+   - `AWS_ACCOUNT_ID`: Your AWS account ID
+   - `APP_RUNNER_SERVICE_ID`: Your App Runner service ID
+   - `S3_BUCKET_NAME`: Your S3 bucket name
+
+3. **Push to main branch** - automatic deployment will begin
+
+See `.env.example` for all required configuration values.
+
 ### Automated Deployment
 
 Every push to `main` branch triggers automated deployment via GitHub Actions:

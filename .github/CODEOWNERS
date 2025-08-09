@@ -1,0 +1,154 @@
+# Insurance Portal - Code Ownership Rules
+
+# This file defines who should review changes to different parts of the codebase
+
+# =============================================================================
+
+# GLOBAL OWNERSHIP - You own everything by default
+
+# =============================================================================
+
+- @chernandez90
+
+# =============================================================================
+
+# CRITICAL INFRASTRUCTURE - Require your review for all infrastructure changes
+
+# =============================================================================
+
+# GitHub Actions workflows (CI/CD pipeline)
+
+.github/workflows/ @chernandez90
+.github/workflows/\*.yml @chernandez90
+
+# Docker configuration
+
+Dockerfile @chernandez90 \*_/Dockerfile @chernandez90
+docker-compose_.yml @chernandez90
+
+# Environment and configuration files
+
+_.json @chernandez90
+appsettings_.json @chernandez90
+.env* @chernandez90
+*.config @chernandez90
+
+# =============================================================================
+
+# .NET API BACKEND - Core business logic
+
+# =============================================================================
+
+# Program.cs and Startup configuration
+
+**/Program.cs @chernandez90
+**/Startup.cs @chernandez90
+
+# Authentication and Security
+
+**/Services/_Auth_ @chernandez90
+**/Services/_Jwt_ @chernandez90
+**/Services/IJwtService.cs @chernandez90
+**/Services/JwtService.cs @chernandez90
+
+# Controllers (API endpoints)
+
+\*\*/Controllers/ @chernandez90
+
+# Data models and DTOs
+
+**/Models/ @chernandez90
+**/DTOs/ @chernandez90
+
+# Repository pattern implementation
+
+\*\*/Repositories/ @chernandez90
+
+# CQRS implementation with MediatR
+
+**/Features/ @chernandez90
+**/Commands/ @chernandez90
+**/Queries/ @chernandez90
+**/Handlers/ @chernandez90
+
+# SignalR Hubs (real-time functionality)
+
+\*\*/Hubs/ @chernandez90
+
+# =============================================================================
+
+# ANGULAR FRONTEND
+
+# =============================================================================
+
+# Angular configuration files
+
+insurance-portal-ui/angular.json @chernandez90
+insurance-portal-ui/package.json @chernandez90
+insurance-portal-ui/package-lock.json @chernandez90
+insurance-portal-ui/tsconfig\*.json @chernandez90
+
+# Environment configuration
+
+insurance-portal-ui/src/environments/ @chernandez90
+
+# Core services (API communication, SignalR)
+
+insurance-portal-ui/src/app/services/ @chernandez90
+
+# =============================================================================
+
+# TESTING
+
+# =============================================================================
+
+# All test files require review
+
+**/_test_ @chernandez90
+**/_Test_ @chernandez90
+**/Tests/ @chernandez90
+**/\*.spec.ts @chernandez90
+
+# Test helpers and configuration
+
+\*\*/TestDbHelper.cs @chernandez90
+
+# =============================================================================
+
+# DOCUMENTATION AND PROJECT FILES
+
+# =============================================================================
+
+# Project documentation
+
+README.md @chernandez90
+\*.md @chernandez90
+docs/ @chernandez90
+
+# Project files
+
+_.sln @chernandez90
+_.csproj @chernandez90
+
+# Git configuration
+
+.gitignore @chernandez90
+.gitattributes @chernandez90
+
+# =============================================================================
+
+# SPECIFIC SECURITY-SENSITIVE FILES
+
+# =============================================================================
+
+# Any file containing "secret", "key", or "password" in the name
+
+**/_secret_ @chernandez90
+**/_key_ @chernandez90
+**/_password_ @chernandez90
+**/_auth_ @chernandez90
+
+# AWS and cloud configuration
+
+**/_aws_ @chernandez90
+**/_s3_ @chernandez90
