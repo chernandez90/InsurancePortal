@@ -179,6 +179,10 @@ jobs:
         run: |
           echo "🚀 Deploying to: $S3_BUCKET"
 
+          # Debug: Check build output
+          echo "📁 Checking build output:"
+          ls -la insurance-portal-ui/dist/
+
           # Create bucket if it doesn't exist
           if ! aws s3 ls "s3://$S3_BUCKET" 2>/dev/null; then
             echo "📦 Creating S3 bucket: $S3_BUCKET"
@@ -207,8 +211,20 @@ jobs:
             echo "✅ S3 bucket configured for static website hosting"
           fi
 
-          # Deploy files using variable instead of hardcoded name
-          aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://$S3_BUCKET --delete --exact-timestamps
+          # Find the correct dist directory
+          if [ -d "insurance-portal-ui/dist/insurance-portal-ui" ]; then
+            DIST_DIR="insurance-portal-ui/dist/insurance-portal-ui"
+          elif [ -d "insurance-portal-ui/dist" ]; then
+            DIST_DIR="insurance-portal-ui/dist"
+          else
+            echo "❌ Could not find build output directory"
+            exit 1
+          fi
+
+          echo "📤 Syncing from: $DIST_DIR"
+
+          # Deploy files
+          aws s3 sync "$DIST_DIR" s3://$S3_BUCKET --delete --exact-timestamps
           aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
 
           echo "✅ Deployed to S3!"
