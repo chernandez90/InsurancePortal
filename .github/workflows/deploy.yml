@@ -178,8 +178,8 @@ jobs:
       - name: 🌐 Deploy to S3
         run: |
           echo "🚀 Deploying to: $S3_BUCKET"
-          aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://$S3_BUCKET --delete
-          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
+          aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://insurance-portal-ui-1430084852 --delete
+          aws s3 cp s3://insurance-portal-ui-1430084852/index.html s3://insurance-portal-ui-1430084852/index.html --metadata-directive REPLACE --cache-control "no-cache"
           echo "✅ Deployed to S3!"
 
   notify:
