@@ -176,43 +176,43 @@ jobs:
           npm run build:prod
 
       - name: 🌐 Deploy to S3
-      run: |
-        echo "🚀 Deploying to: $S3_BUCKET"
+        run: |
+          echo "🚀 Deploying to: $S3_BUCKET"
 
-        # Create bucket if it doesn't exist
-        if ! aws s3 ls "s3://$S3_BUCKET" 2>/dev/null; then
-          echo "📦 Creating S3 bucket: $S3_BUCKET"
-          aws s3 mb s3://$S3_BUCKET --region $AWS_REGION
-          
-          # Configure static website hosting
-          aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
-          
-          # Set bucket policy for public read access
-          aws s3api put-bucket-policy --bucket $S3_BUCKET --policy '{
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Sid": "PublicReadGetObject",
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:GetObject",
-                "Resource": "arn:aws:s3:::'$S3_BUCKET'/*"
-              }
-            ]
-          }'
-          
-          # Remove public access blocks
-          aws s3api put-public-access-block --bucket $S3_BUCKET --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
-          
-          echo "✅ S3 bucket configured for static website hosting"
-        fi
+          # Create bucket if it doesn't exist
+          if ! aws s3 ls "s3://$S3_BUCKET" 2>/dev/null; then
+            echo "📦 Creating S3 bucket: $S3_BUCKET"
+            aws s3 mb s3://$S3_BUCKET --region $AWS_REGION
+            
+            # Configure static website hosting
+            aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
+            
+            # Set bucket policy for public read access
+            aws s3api put-bucket-policy --bucket $S3_BUCKET --policy '{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "PublicReadGetObject",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::'$S3_BUCKET'/*"
+                }
+              ]
+            }'
+            
+            # Remove public access blocks
+            aws s3api put-public-access-block --bucket $S3_BUCKET --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+            
+            echo "✅ S3 bucket configured for static website hosting"
+          fi
 
-        # Deploy files using variable instead of hardcoded name
-        aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://$S3_BUCKET --delete --exact-timestamps
-        aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
+          # Deploy files using variable instead of hardcoded name
+          aws s3 sync insurance-portal-ui/dist/insurance-portal-ui s3://$S3_BUCKET --delete --exact-timestamps
+          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
 
-        echo "✅ Deployed to S3!"
-        echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+          echo "✅ Deployed to S3!"
+          echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
 
   notify:
     name: 📢 Success
