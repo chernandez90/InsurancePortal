@@ -249,7 +249,25 @@ export class ClaimsListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadClaims();
-    this.setupSignalR();
+
+    // Start SignalR connection with error handling
+    this.signalRService
+      .startConnection()
+      .then(() => {
+        console.log('✅ SignalR connected successfully');
+        this.setupSignalRListeners();
+      })
+      .catch((error) => {
+        console.log(
+          '⚠️ SignalR connection failed, continuing without real-time updates'
+        );
+        // App continues to work without real-time features
+      });
+
+    this.signalRService.connectionStatus$.subscribe((status) => {
+      this.isConnected = status;
+      this.connectionStatus = status ? 'Connected' : 'Disconnected';
+    });
   }
 
   ngOnDestroy(): void {
@@ -271,34 +289,12 @@ export class ClaimsListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setupSignalR(): void {
-    this.signalRService
-      .startConnection()
-      .then(() => {
-        this.isConnected = true;
-        this.connectionStatus = 'Connected';
-      })
-      .catch((err) => {
-        this.isConnected = false;
-        this.connectionStatus = 'Connection Failed';
-      });
-
-    // Now this will work with RxJS observable
-    this.signalRSubscription = this.signalRService.claimUpdates$.subscribe(
-      (message: string) => {
-        if (message && message.trim() !== '') {
-          this.realtimeMessages.unshift(message);
-          if (this.realtimeMessages.length > 10) {
-            this.realtimeMessages = this.realtimeMessages.slice(0, 10);
-          }
-
-          // Mark new claims for highlighting
-          if (message.includes('New claim created')) {
-            setTimeout(() => this.loadClaims(), 500); // Small delay to ensure backend has processed
-          }
-        }
-      }
-    );
+  private setupSignalRListeners(): void {
+    this.signalRService.onClaimUpdate((message: string) => {
+      this.realtimeMessages.unshift(message);
+      this.realtimeMessages = this.realtimeMessages.slice(0, 5);
+      this.loadClaims(); // Refresh claims list
+    });
   }
 
   getCurrentTime(): string {

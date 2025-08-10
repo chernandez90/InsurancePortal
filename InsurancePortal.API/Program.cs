@@ -144,7 +144,14 @@ catch (Exception ex)
 builder.Services.AddDataProtection();
 
 // SignalR
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+})
+.AddJsonProtocol(); // Ensure JSON protocol is available for all transports
 
 // API Controllers
 builder.Services.AddControllers();
@@ -201,8 +208,14 @@ app.MapGet("/health", () => Results.Ok(new {
     Environment = app.Environment.EnvironmentName 
 }));
 
-// SignalR Hub
-app.MapHub<ClaimHub>("/claimHub");
+app.UseRouting();
+
+// Configure SignalR hub with additional options
+app.MapHub<ClaimHub>("/claimHub", options =>
+{
+    // Allow all transports for better compatibility
+    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.All;
+});
 
 // API Controllers
 app.MapControllers();

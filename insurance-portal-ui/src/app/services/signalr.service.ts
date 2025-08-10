@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -8,80 +8,65 @@ import { environment } from '../../environments/environment';
 })
 export class SignalRService {
   private hubConnection: signalR.HubConnection | null = null;
-  private connectionStarted = false;
-  private claimUpdatesSubject = new BehaviorSubject<string>('');
-
-  // Expose the observable for components to subscribe to
-  public claimUpdates$: Observable<string> =
-    this.claimUpdatesSubject.asObservable();
+  private connectionStatusSubject = new BehaviorSubject<boolean>(false);
+  public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
   constructor() {}
 
   public startConnection(): Promise<void> {
-    if (this.connectionStarted) {
-      return Promise.resolve();
-    }
+    const token = localStorage.getItem('token');
 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(environment.signalRUrl, {
-        skipNegotiation: false, // Let SignalR negotiate the best transport
-        transport: signalR.HttpTransportType.WebSockets,
-        accessTokenFactory: () => {
-          const token = localStorage.getItem('token');
-          return token || '';
-        },
+      .withUrl(`${environment.signalRUrl}`, {
+        accessTokenFactory: () => token || '',
+        transport: environment.production
+          ? signalR.HttpTransportType.ServerSentEvents |
+            signalR.HttpTransportType.LongPolling // Use fallback transports in production
+          : signalR.HttpTransportType.WebSockets |
+            signalR.HttpTransportType.ServerSentEvents |
+            signalR.HttpTransportType.LongPolling, // All transports in dev
       })
-      .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Information) // Add logging
+      .configureLogging(signalR.LogLevel.Information)
       .build();
 
     return this.hubConnection
       .start()
       .then(() => {
-        console.log('✅ SignalR Connected to:', environment.signalRUrl);
-        this.connectionStarted = true;
-        this.addClaimUpdateListener();
+        console.log('✅ SignalR Connection started successfully');
+        this.connectionStatusSubject.next(true);
       })
       .catch((err) => {
         console.error('❌ SignalR Connection Error:', err);
-        this.connectionStarted = false;
-        throw err;
+        this.connectionStatusSubject.next(false);
+
+        // Don't throw error in production - graceful degradation
+        if (!environment.production) {
+          throw err;
+        }
       });
   }
 
   public stopConnection(): void {
-    if (this.hubConnection && this.connectionStarted) {
-      this.hubConnection.stop();
-      this.connectionStarted = false;
-    }
-  }
-
-  private addClaimUpdateListener(): void {
     if (this.hubConnection) {
-      this.hubConnection.on('ReceiveClaimUpdate', (message: string) => {
-        console.log('📢 Real-time update received:', message);
-        // Emit the message through the BehaviorSubject
-        this.claimUpdatesSubject.next(message);
-      });
-    }
-  }
-
-  public joinGroup(groupName: string): void {
-    if (this.hubConnection && this.connectionStarted) {
       this.hubConnection
-        .invoke('JoinGroup', groupName)
-        .catch((err) => console.error('Error joining group:', err));
+        .stop()
+        .then(() => {
+          console.log('SignalR connection stopped');
+          this.connectionStatusSubject.next(false);
+        })
+        .catch((err) =>
+          console.error('Error stopping SignalR connection:', err)
+        );
     }
   }
 
-  public getConnectionState(): string {
-    return this.hubConnection?.state || 'Disconnected';
+  public onClaimUpdate(callback: (message: string) => void): void {
+    if (this.hubConnection) {
+      this.hubConnection.on('ClaimUpdated', callback);
+    }
   }
 
   public isConnected(): boolean {
-    return (
-      this.connectionStarted &&
-      this.hubConnection?.state === signalR.HubConnectionState.Connected
-    );
+    return this.hubConnection?.state === signalR.HubConnectionState.Connected;
   }
 }
