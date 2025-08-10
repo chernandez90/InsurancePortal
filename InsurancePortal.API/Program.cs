@@ -12,19 +12,52 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add CORS policy for production
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add CORS configuration with environment-based origins
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularDev",
-        policy => policy.WithOrigins(
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        var allowedOrigins = new List<string>
+        {
             "http://localhost:4200",
-            "https://localhost:4200",
-            "https://*.amplifyapp.com",
-            "https://*.awsapprunner.com"
-        )
+            "https://localhost:4200"
+        };
+
+        // Add production frontend URL from environment variable
+        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+        if (!string.IsNullOrEmpty(frontendUrl))
+        {
+            allowedOrigins.Add(frontendUrl);
+            // Also add HTTPS version if HTTP is provided
+            if (frontendUrl.StartsWith("http://"))
+            {
+                allowedOrigins.Add(frontendUrl.Replace("http://", "https://"));
+            }
+        }
+
+        // Allow all S3 website domains for this project (more permissive but safer than allowing all)
+        policy.SetIsOriginAllowed(origin =>
+        {
+            if (string.IsNullOrEmpty(origin)) return false;
+            
+            // Allow localhost for development
+            if (origin.Contains("localhost")) return true;
+            
+            // Allow your S3 website pattern
+            if (origin.Contains("insurance-portal-ui") && origin.Contains("s3-website")) return true;
+            
+            // Check against explicitly allowed origins
+            return allowedOrigins.Contains(origin);
+        })
         .AllowAnyHeader()
         .AllowAnyMethod()
-        .AllowCredentials());
+        .AllowCredentials();
+    });
 });
 
 // Add Authentication
@@ -145,27 +178,18 @@ builder.Logging.AddConsole();
 
 var app = builder.Build();
 
-// CORS
-app.UseCors("AllowAngularDev");
-
-// Swagger available for demo
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Insurance Portal API v1");
-    c.RoutePrefix = "swagger";
-});
-
-// Security Headers
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
-    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
-    await next();
-});
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
+
+// Use CORS - This must be before UseAuthorization and MapControllers
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
