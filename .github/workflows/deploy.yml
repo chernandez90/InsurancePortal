@@ -409,20 +409,18 @@ jobs:
           echo "🔗 Testing website URL:"
           curl -I "http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com" || echo "Website not accessible"
 
+      - name: Deploy to S3 and configure SPA routing
+        run: |
+          # Upload files to S3
+          aws s3 sync ./dist/insurance-portal-ui s3://$S3_BUCKET --delete
+
+          # Configure S3 for SPA routing
+          aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
+
+          # Set proper content types
+          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --content-type "text/html"
+
   notify:
     name: 📢 Success
     needs: [deploy-api, deploy-frontend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: 🎉 Deployment Complete
-        run: |
-          echo "🚀 Insurance Portal deployed successfully!"
-          echo ""
-          echo "🌐 Frontend: http://${{ secrets.S3_BUCKET_NAME }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com"
-          echo "🔗 API: ${{ needs.deploy-api.outputs.api-url }}/swagger"
-          echo "🏥 Health: ${{ needs.deploy-api.outputs.api-url }}/health"  
-          echo "📡 SignalR: ${{ needs.deploy-api.outputs.api-url }}/claimHub"
-          echo ""
-          echo "✨ Real-time features ready!"
+    runs-on: ubuntu-l
