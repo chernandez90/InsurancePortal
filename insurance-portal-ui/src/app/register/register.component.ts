@@ -7,7 +7,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, RegisterDto } from '../services/auth.service';
+import {
+  AuthService,
+  RegisterDto,
+  AuthResponse,
+} from '../services/auth.service'; // Add AuthResponse to imports
 
 @Component({
   selector: 'app-register',
@@ -222,15 +226,13 @@ export class RegisterComponent {
       const userData: RegisterDto = this.registerForm.value;
 
       this.authService.register(userData).subscribe({
-        next: (response) => {
-          console.log('Registration successful:', response);
-          this.router.navigate(['/claims']);
-        },
-        error: (error) => {
-          console.error('Registration error:', error);
-          this.errorMessage =
-            'Registration failed. Username may already exist.';
+        next: (response: AuthResponse) => {
           this.loading = false;
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error: any) => {
+          this.loading = false;
+          this.errorMessage = error.error?.message || 'Registration failed';
         },
       });
     }

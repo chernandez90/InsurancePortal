@@ -1,45 +1,51 @@
-import 'zone.js'; // Add this line at the very top
+import 'zone.js';
 
 import { bootstrapApplication } from '@angular/platform-browser';
-import { importProvidersFrom, isDevMode } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-
+import { provideRouter, Routes } from '@angular/router';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { AppComponent } from './app/app.component';
-import { ClaimsListComponent } from './app/claims-list/claims-list.component';
-import { ClaimFormComponent } from './app/claim-form/claim-form.component';
 import { LoginComponent } from './app/login/login.component';
-import { RegisterComponent } from './app/register/register.component';
-import { AuthInterceptor } from './app/services/auth.interceptor';
-import { AuthGuard } from './app/services/auth.guard';
-import { SignalRService } from './app/services/signalr.service';
-import { provideServiceWorker } from '@angular/service-worker';
+import { DashboardComponent } from './app/dashboard/dashboard.component';
+import { AuthInterceptor } from './app/services/auth.interceptor'; // Import your interceptor
 
-const routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' as const },
+const routes: Routes = [
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'claims', component: ClaimsListComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard', component: DashboardComponent },
   {
-    path: 'claim-form',
-    component: ClaimFormComponent,
-    canActivate: [AuthGuard],
+    path: 'claims-list',
+    loadComponent: () =>
+      import('./app/claims-list/claims-list.component').then(
+        (c) => c.ClaimsListComponent
+      ),
   },
+  {
+    path: 'claims',
+    loadComponent: () =>
+      import('./app/claims/claims.component').then((c) => c.ClaimsComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./app/register/register.component').then(
+        (c) => c.RegisterComponent
+      ),
+  },
+  { path: '**', redirectTo: '/login' },
 ];
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    importProvidersFrom(HttpClientModule),
-    SignalRService,
+    provideHttpClient(withInterceptorsFromDi()),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true,
     },
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
-    }),
   ],
 }).catch((err) => console.error(err));

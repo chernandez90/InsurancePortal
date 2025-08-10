@@ -200,15 +200,33 @@ export class LoginComponent {
 
       const credentials: LoginDto = this.loginForm.value;
 
+      console.log('🔐 Attempting login...', credentials);
+
       this.authService.login(credentials).subscribe({
         next: (response) => {
-          console.log('Login successful:', response);
-          this.router.navigate(['/claims']);
+          console.log('✅ Login successful:', response);
+          this.loading = false;
+
+          console.log('🚀 Attempting navigation to dashboard...');
+          this.router
+            .navigate(['/dashboard'])
+            .then((success) => {
+              console.log('🎯 Navigation result:', success);
+              if (success) {
+                console.log('✅ Navigation successful!');
+              } else {
+                console.error('❌ Navigation failed - trying window.location');
+                window.location.href = '/dashboard';
+              }
+            })
+            .catch((error) => {
+              console.error('❌ Navigation error:', error);
+            });
         },
         error: (error) => {
-          console.error('Login error:', error);
-          this.errorMessage = 'Invalid username or password';
+          console.error('❌ Login error:', error);
           this.loading = false;
+          this.errorMessage = 'Login failed. Please try again.';
         },
       });
     }

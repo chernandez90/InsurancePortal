@@ -21,18 +21,12 @@ export interface AuthResponse {
   role: string;
 }
 
-export interface User {
-  username: string;
-  email: string;
-  role: string;
-}
-
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private currentUserSubject = new BehaviorSubject<any>(null);
   private tokenSubject = new BehaviorSubject<string | null>(null);
 
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -40,11 +34,8 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-
-    if (token && user) {
+    if (token) {
       this.tokenSubject.next(token);
-      this.currentUserSubject.next(JSON.parse(user));
     }
   }
 
@@ -54,15 +45,6 @@ export class AuthService {
       .pipe(
         tap((response) => {
           localStorage.setItem('token', response.token);
-          localStorage.setItem(
-            'user',
-            JSON.stringify({
-              username: response.username,
-              email: response.email,
-              role: response.role,
-            })
-          );
-
           this.tokenSubject.next(response.token);
           this.currentUserSubject.next({
             username: response.username,
@@ -73,21 +55,12 @@ export class AuthService {
       );
   }
 
-  register(userData: RegisterDto): Observable<AuthResponse> {
+  register(credentials: RegisterDto): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/register`, userData)
+      .post<AuthResponse>(`${this.apiUrl}/register`, credentials)
       .pipe(
         tap((response) => {
           localStorage.setItem('token', response.token);
-          localStorage.setItem(
-            'user',
-            JSON.stringify({
-              username: response.username,
-              email: response.email,
-              role: response.role,
-            })
-          );
-
           this.tokenSubject.next(response.token);
           this.currentUserSubject.next({
             username: response.username,
@@ -96,20 +69,19 @@ export class AuthService {
           });
         })
       );
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('token');
   }
 
   logout(): void {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
     this.tokenSubject.next(null);
     this.currentUserSubject.next(null);
   }
 
-  getToken(): string | null {
-    return this.tokenSubject.value;
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  get isAuthenticated(): boolean {
+    return !!localStorage.getItem('token');
   }
 }

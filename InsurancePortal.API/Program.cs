@@ -24,8 +24,9 @@ builder.Services.AddCors(options =>
     {
         var allowedOrigins = new List<string>
         {
-            "http://localhost:4200",
-            "https://localhost:4200"
+            "http://localhost:4200",  // Angular dev server
+            "https://localhost:4200", // Angular dev server HTTPS
+            "https://localhost:7018", // Your API (for testing)
         };
 
         // Add production frontend URL from environment variable
@@ -40,7 +41,7 @@ builder.Services.AddCors(options =>
             }
         }
 
-        // Allow all S3 website domains for this project (more permissive but safer than allowing all)
+        // Allow S3 website pattern for production
         policy.SetIsOriginAllowed(origin =>
         {
             if (string.IsNullOrEmpty(origin)) return false;
