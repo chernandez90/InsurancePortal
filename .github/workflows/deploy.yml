@@ -245,19 +245,36 @@ jobs:
             DIST_DIR="insurance-portal-ui/dist"
           else
             echo "❌ Could not find build output directory"
+            ls -la insurance-portal-ui/  # Debug: show what's actually there
             exit 1
           fi
 
+          echo "📁 Using build directory: $DIST_DIR"
+          ls -la "$DIST_DIR"  # Debug: show what files we're deploying
+
           # Upload files to S3
-          aws s3 sync "$DIST_DIR" s3://$S3_BUCKET --delete
+          echo "📤 Syncing files to S3..."
+          aws s3 sync "$DIST_DIR" s3://$S3_BUCKET --delete --region $AWS_REGION
 
-          # Configure S3 for SPA routing (this fixes the 404 refresh issue)
-          aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
+          # Configure S3 for SPA routing - this is the critical part!
+          echo "🔧 Configuring S3 website for SPA routing..."
+          aws s3 website s3://$S3_BUCKET \
+            --index-document index.html \
+            --error-document index.html \
+            --region $AWS_REGION
 
-          # Set proper content types for index.html
-          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --content-type "text/html"
+          # Verify the website configuration
+          echo "✅ Verifying S3 website configuration..."
+          aws s3api get-bucket-website --bucket $S3_BUCKET --region $AWS_REGION
 
-          echo "✅ Deployed to S3 with SPA routing!"
+          # Set proper content types
+          echo "🔧 Setting content types..."
+          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html \
+            --metadata-directive REPLACE \
+            --content-type "text/html" \
+            --region $AWS_REGION
+
+          echo "✅ S3 deployment complete!"
           echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
 
   notify:
