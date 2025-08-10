@@ -2,10 +2,9 @@
 {
     public class ClaimDto
     {
-        public string PolicyNumber { get; set; }
-        public string Description { get; set; }
+        public int Id { get; set; }
+        public required string PolicyNumber { get; set; } // Add required
+        public required string Description { get; set; }  // Add required
         public DateTime DateFiled { get; set; }
-        // Add validation attributes if needed
-
     }
 }

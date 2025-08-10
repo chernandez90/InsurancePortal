@@ -195,11 +195,21 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Use CORS - This must be before UseAuthorization and MapControllers
+app.UseRouting();
 app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
+
+// Correct SignalR hub mapping with proper transport types
+app.MapHub<ClaimHub>("/claimHub", options =>
+{
+    options.Transports = 
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.ServerSentEvents |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+});
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { 
@@ -207,18 +217,6 @@ app.MapGet("/health", () => Results.Ok(new {
     Time = DateTime.UtcNow,
     Environment = app.Environment.EnvironmentName 
 }));
-
-app.UseRouting();
-
-// Configure SignalR hub with additional options
-app.MapHub<ClaimHub>("/claimHub", options =>
-{
-    // Allow all transports for better compatibility
-    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.All;
-});
-
-// API Controllers
-app.MapControllers();
 
 // Startup logging
 app.Lifetime.ApplicationStarted.Register(() =>
