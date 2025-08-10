@@ -263,39 +263,72 @@ jobs:
       - name: 🌐 Deploy to S3 with Correct Content Types
         run: |
           cd insurance-portal-ui
-          
+
           # Find dist directory
           if [ -d "dist/insurance-portal-ui" ]; then
             DIST_DIR="dist/insurance-portal-ui"
           elif [ -d "dist" ]; then
             DIST_DIR="dist"
+          else
+            echo "❌ No build output found"
+            exit 1
           fi
-          
+
           echo "📤 Uploading files with correct content types..."
-          
+
+          # Clear bucket first to avoid conflicts
+          aws s3 rm "s3://$S3_BUCKET" --recursive
+
           # Upload HTML files with correct content type
-          find "$DIST_DIR" -name "*.html" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
-            --content-type "text/html; charset=utf-8" \
-            --cache-control "no-cache, no-store, must-revalidate" \;
-          
+          find "$DIST_DIR" -name "*.html" | while read -r file; do
+            relative_path="${file#$DIST_DIR/}"
+            echo "📄 Uploading HTML: $relative_path"
+            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
+              --content-type "text/html; charset=utf-8" \
+              --cache-control "no-cache, no-store, must-revalidate"
+          done
+
           # Upload CSS files
-          find "$DIST_DIR" -name "*.css" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
-            --content-type "text/css" \
-            --cache-control "public, max-age=31536000" \;
-          
+          find "$DIST_DIR" -name "*.css" | while read -r file; do
+            relative_path="${file#$DIST_DIR/}"
+            echo "🎨 Uploading CSS: $relative_path"
+            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
+              --content-type "text/css" \
+              --cache-control "public, max-age=31536000"
+          done
+
           # Upload JS files
-          find "$DIST_DIR" -name "*.js" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
-            --content-type "application/javascript" \
-            --cache-control "public, max-age=31536000" \;
-          
+          find "$DIST_DIR" -name "*.js" | while read -r file; do
+            relative_path="${file#$DIST_DIR/}"
+            echo "⚡ Uploading JS: $relative_path"
+            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
+              --content-type "application/javascript" \
+              --cache-control "public, max-age=31536000"
+          done
+
           # Upload other files (images, fonts, etc.)
-          aws s3 sync "$DIST_DIR/" "s3://$S3_BUCKET/" \
-            --delete \
-            --exclude "*.html" \
-            --exclude "*.css" \
-            --exclude "*.js"
-          
+          find "$DIST_DIR" -type f \
+            ! -name "*.html" \
+            ! -name "*.css" \
+            ! -name "*.js" | while read -r file; do
+            relative_path="${file#$DIST_DIR/}"
+            echo "📁 Uploading other: $relative_path"
+            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path"
+          done
+
+          # Verify content types were set correctly
+          echo "🔍 Verifying content types..."
+          aws s3api head-object --bucket "$S3_BUCKET" --key "index.html" \
+            --query 'ContentType' --output text
+
           echo "✅ Files uploaded with correct content types!"
+
+          # Test the website URL
+          WEBSITE_URL="http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+          echo "🌐 Website URL: $WEBSITE_URL"
+
+          sleep 5
+          curl -I "$WEBSITE_URL" | head -5 || echo "Testing website..."
 
       - name: 🔍 Debug S3 Deployment
         run: |
