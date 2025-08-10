@@ -78,111 +78,106 @@ jobs:
 
           echo "✅ Docker image pushed successfully!"
 
-      - name: 🔍 Check App Runner Service Status
-        id: check-status
-        run: |
-          echo "🔍 Checking App Runner service status..."
-          STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-          echo "📊 Current status: $STATUS"
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
-
       - name: 🚀 Deploy to App Runner
         run: |
-          echo "🔍 Getting current service status..."
-          STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-          echo "📊 Initial status: $STATUS"
+          echo "🔍 Checking current service status..."
+          CURRENT_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+          echo "Current service status: $CURRENT_STATUS"
 
-          # Wait for service to be in a stable state first
-          echo "⏳ Ensuring service is in stable RUNNING state..."
-          timeout 300 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do 
-            CURRENT_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
-            echo "Waiting for RUNNING state... Current: $CURRENT_STATUS"
-            sleep 15
-          done'
-
-          # Double-check the status before deployment
-          FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-          echo "📊 Verified status before deployment: $FINAL_STATUS"
-
-          if [[ "$FINAL_STATUS" != "RUNNING" ]]; then
-            echo "❌ Service is not in RUNNING state: $FINAL_STATUS"
-            echo "⏳ Waiting additional time for service to stabilize..."
-            sleep 60
-            
-            RETRY_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-            if [[ "$RETRY_STATUS" != "RUNNING" ]]; then
-              echo "❌ Service failed to reach stable RUNNING state: $RETRY_STATUS"
+          # Handle different service states
+          case $CURRENT_STATUS in
+            "RUNNING")
+              echo "✅ Service is running, starting deployment..."
+              aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+              ;;
+            "CREATE_FAILED"|"DELETE_FAILED")
+              echo "❌ Service is in failed state: $CURRENT_STATUS"
+              echo "Please check AWS Console and fix the service manually"
               exit 1
-            fi
-          fi
-
-          # Start deployment with retry logic
-          echo "🚀 Starting deployment..."
-          DEPLOYMENT_STARTED=false
-          RETRY_COUNT=0
-          MAX_RETRIES=3
-
-          while [[ $RETRY_COUNT -lt $MAX_RETRIES && "$DEPLOYMENT_STARTED" == false ]]; do
-            if aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}; then
-              echo "✅ Deployment started successfully!"
-              DEPLOYMENT_STARTED=true
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "⚠️ Deployment start failed. Retry $RETRY_COUNT/$MAX_RETRIES"
-              if [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; then
-                echo "⏳ Waiting 30 seconds before retry..."
-                sleep 30
-                # Check service status again
-                CURRENT_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-                echo "📊 Service status during retry: $CURRENT_STATUS"
-              fi
-            fi
-          done
-
-          if [[ "$DEPLOYMENT_STARTED" == false ]]; then
-            echo "❌ Failed to start deployment after $MAX_RETRIES attempts"
-            exit 1
-          fi
+              ;;
+            "PAUSED")
+              echo "⏸️ Service is paused, resuming first..."
+              aws apprunner resume-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+              echo "⏳ Waiting for service to resume..."
+              timeout 600 bash -c '
+                while true; do
+                  STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+                  echo "Resume status: $STATUS"
+                  if [[ "$STATUS" == "RUNNING" ]]; then
+                    echo "✅ Service resumed successfully!"
+                    break
+                  elif [[ "$STATUS" =~ .*_FAILED ]]; then
+                    echo "❌ Service resume failed with status: $STATUS"
+                    exit 1
+                  fi
+                  sleep 20
+                done
+              '
+              echo "🚀 Starting deployment after resume..."
+              aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+              ;;
+            "OPERATION_IN_PROGRESS")
+              echo "⏳ Service operation already in progress, waiting for completion..."
+              timeout 900 bash -c '
+                while true; do
+                  STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+                  echo "Current status: $STATUS"
+                  if [[ "$STATUS" == "RUNNING" ]]; then
+                    echo "✅ Previous operation completed, starting deployment..."
+                    aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+                    break
+                  elif [[ "$STATUS" =~ .*_FAILED ]]; then
+                    echo "❌ Previous operation failed with status: $STATUS"
+                    exit 1
+                  fi
+                  sleep 30
+                done
+              '
+              ;;
+            *)
+              echo "⚠️ Unknown service status: $CURRENT_STATUS"
+              echo "Waiting for service to become available..."
+              timeout 900 bash -c '
+                while true; do
+                  STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+                  echo "Waiting status: $STATUS"
+                  if [[ "$STATUS" == "RUNNING" ]]; then
+                    echo "✅ Service is now running, starting deployment..."
+                    aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
+                    break
+                  elif [[ "$STATUS" =~ .*_FAILED ]]; then
+                    echo "❌ Service failed with status: $STATUS"
+                    exit 1
+                  fi
+                  sleep 30
+                done
+              '
+              ;;
+          esac
 
           echo "⏳ Waiting for deployment to complete..."
-          # Wait for deployment to finish with better error handling
           timeout 900 bash -c '
             while true; do
               STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
-              echo "Current status: $STATUS"
+              OPERATION_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.ServiceUrl --output text 2>/dev/null || echo "unavailable")
               
-              case $STATUS in
-                "RUNNING")
-                  echo "✅ Deployment completed successfully!"
-                  break
-                  ;;
-                "OPERATION_IN_PROGRESS")
-                  echo "🔄 Deployment in progress..."
-                  sleep 30
-                  ;;
-                "CREATE_FAILED"|"UPDATE_FAILED"|"DELETE_FAILED")
-                  echo "❌ Deployment failed with status: $STATUS"
-                  exit 1
-                  ;;
-                *)
-                  echo "⏳ Status: $STATUS - continuing to wait..."
-                  sleep 30
-                  ;;
-              esac
+              echo "Deployment status: $STATUS"
+              
+              if [[ "$STATUS" == "RUNNING" ]]; then
+                echo "✅ Deployment completed successfully!"
+                break
+              elif [[ "$STATUS" =~ .*_FAILED ]]; then
+                echo "❌ Deployment failed with status: $STATUS"
+                
+                # Get failure details
+                echo "🔍 Checking for deployment failures..."
+                aws apprunner list-operations --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --max-items 3 || true
+                exit 1
+              fi
+              
+              sleep 30
             done
-          ' || {
-            echo "⚠️ Deployment timeout reached"
-            FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-            echo "📊 Final status: $FINAL_STATUS"
-            if [[ "$FINAL_STATUS" != "RUNNING" ]]; then
-              echo "❌ Deployment did not complete successfully"
-              exit 1
-            else
-              echo "✅ Service is running despite timeout"
-            fi
-          }
-
-          echo "✅ App Runner deployment completed!"
+          '
 
       - name: 🔗 Get API URL
         id: get-api-url
@@ -207,7 +202,6 @@ jobs:
           node-version: "18"
           cache: "npm"
           cache-dependency-path: insurance-portal-ui/package-lock.json
-        continue-on-error: true
 
       - name: 🔑 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -219,90 +213,30 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           cd insurance-portal-ui
-          # Check if package-lock.json exists
-          if [ -f package-lock.json ]; then
-            echo "📋 Using package-lock.json"
-            npm ci
-          else
-            echo "📋 No package-lock.json found, using npm install"
-            npm install
-          fi
+          npm ci
 
       - name: 🔧 Update environment files
         run: |
           cd insurance-portal-ui/src/environments
 
-          echo "🔧 Current API URL: ${{ needs.deploy-api.outputs.api-url }}"
-
-          # Backup original files
-          cp environment.prod.ts environment.prod.ts.bak || true
-          cp environment.ts environment.ts.bak || true
-
-          # Update environment files with all required properties
           cat > environment.prod.ts << EOF
           export const environment = {
             production: true,
             apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub',
-            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
-          };
-          EOF
-
-          cat > environment.ts << EOF
-          export const environment = {
-            production: false,
-            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            hubUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub',
             signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
           };
           EOF
 
           echo "✅ Environment files updated!"
-          echo "📄 Production environment:"
-          cat environment.prod.ts
-          echo "📄 Development environment:"
-          cat environment.ts
 
       - name: 🔨 Build Angular
         run: |
           cd insurance-portal-ui
           npm run build:prod
 
-      - name: 🌐 Deploy to S3
+      - name: 🌐 Deploy to S3 and configure SPA routing
         run: |
           echo "🚀 Deploying to: $S3_BUCKET"
-
-          # Debug: Check build output
-          echo "📁 Checking build output:"
-          ls -la insurance-portal-ui/dist/
-
-          # Create bucket if it doesn't exist
-          if ! aws s3 ls "s3://$S3_BUCKET" 2>/dev/null; then
-            echo "📦 Creating S3 bucket: $S3_BUCKET"
-            aws s3 mb s3://$S3_BUCKET --region $AWS_REGION
-            
-            # Configure static website hosting
-            aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
-            
-            # Set bucket policy for public read access
-            aws s3api put-bucket-policy --bucket $S3_BUCKET --policy '{
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Sid": "PublicReadGetObject",
-                  "Effect": "Allow",
-                  "Principal": "*",
-                  "Action": "s3:GetObject",
-                  "Resource": "arn:aws:s3:::'$S3_BUCKET'/*"
-                }
-              ]
-            }'
-            
-            # Remove public access blocks
-            aws s3api put-public-access-block --bucket $S3_BUCKET --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
-            
-            echo "✅ S3 bucket configured for static website hosting"
-          fi
 
           # Find the correct dist directory
           if [ -d "insurance-portal-ui/dist/insurance-portal-ui" ]; then
@@ -314,113 +248,35 @@ jobs:
             exit 1
           fi
 
-          echo "📤 Syncing from: $DIST_DIR"
-
-          # Deploy files
-          aws s3 sync "$DIST_DIR" s3://$S3_BUCKET --delete --exact-timestamps
-          aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --cache-control "no-cache"
-
-          echo "✅ Deployed to S3!"
-          echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
-
-      - name: 🌐 Deploy to S3 with Correct Content Types
-        run: |
-          cd insurance-portal-ui
-
-          # Find dist directory
-          if [ -d "dist/insurance-portal-ui" ]; then
-            DIST_DIR="dist/insurance-portal-ui"
-          elif [ -d "dist" ]; then
-            DIST_DIR="dist"
-          else
-            echo "❌ No build output found"
-            exit 1
-          fi
-
-          echo "📤 Uploading files with correct content types..."
-
-          # Clear bucket first to avoid conflicts
-          aws s3 rm "s3://$S3_BUCKET" --recursive
-
-          # Upload HTML files with correct content type
-          find "$DIST_DIR" -name "*.html" | while read -r file; do
-            relative_path="${file#$DIST_DIR/}"
-            echo "📄 Uploading HTML: $relative_path"
-            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
-              --content-type "text/html; charset=utf-8" \
-              --cache-control "no-cache, no-store, must-revalidate"
-          done
-
-          # Upload CSS files
-          find "$DIST_DIR" -name "*.css" | while read -r file; do
-            relative_path="${file#$DIST_DIR/}"
-            echo "🎨 Uploading CSS: $relative_path"
-            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
-              --content-type "text/css" \
-              --cache-control "public, max-age=31536000"
-          done
-
-          # Upload JS files
-          find "$DIST_DIR" -name "*.js" | while read -r file; do
-            relative_path="${file#$DIST_DIR/}"
-            echo "⚡ Uploading JS: $relative_path"
-            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path" \
-              --content-type "application/javascript" \
-              --cache-control "public, max-age=31536000"
-          done
-
-          # Upload other files (images, fonts, etc.)
-          find "$DIST_DIR" -type f \
-            ! -name "*.html" \
-            ! -name "*.css" \
-            ! -name "*.js" | while read -r file; do
-            relative_path="${file#$DIST_DIR/}"
-            echo "📁 Uploading other: $relative_path"
-            aws s3 cp "$file" "s3://$S3_BUCKET/$relative_path"
-          done
-
-          # Verify content types were set correctly
-          echo "🔍 Verifying content types..."
-          aws s3api head-object --bucket "$S3_BUCKET" --key "index.html" \
-            --query 'ContentType' --output text
-
-          echo "✅ Files uploaded with correct content types!"
-
-          # Test the website URL
-          WEBSITE_URL="http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
-          echo "🌐 Website URL: $WEBSITE_URL"
-
-          sleep 5
-          curl -I "$WEBSITE_URL" | head -5 || echo "Testing website..."
-
-      - name: 🔍 Debug S3 Deployment
-        run: |
-          echo "🔍 Debugging S3 deployment..."
-
-          # Check if files were uploaded
-          echo "📁 S3 bucket contents:"
-          aws s3 ls s3://$S3_BUCKET --recursive
-
-          # Check bucket website configuration
-          echo "🌐 Website configuration:"
-          aws s3api get-bucket-website --bucket $S3_BUCKET || echo "No website configuration found"
-
-          # Test the website URL
-          echo "🔗 Testing website URL:"
-          curl -I "http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com" || echo "Website not accessible"
-
-      - name: Deploy to S3 and configure SPA routing
-        run: |
           # Upload files to S3
-          aws s3 sync ./dist/insurance-portal-ui s3://$S3_BUCKET --delete
+          aws s3 sync "$DIST_DIR" s3://$S3_BUCKET --delete
 
-          # Configure S3 for SPA routing
+          # Configure S3 for SPA routing (this fixes the 404 refresh issue)
           aws s3 website s3://$S3_BUCKET --index-document index.html --error-document index.html
 
-          # Set proper content types
+          # Set proper content types for index.html
           aws s3 cp s3://$S3_BUCKET/index.html s3://$S3_BUCKET/index.html --metadata-directive REPLACE --content-type "text/html"
 
+          echo "✅ Deployed to S3 with SPA routing!"
+          echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+
   notify:
-    name: 📢 Success
+    name: 📢 Deployment Complete
     needs: [deploy-api, deploy-frontend]
-    runs-on: ubuntu-l
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 🎉 Success Notification
+        if: ${{ needs.deploy-api.result == 'success' && needs.deploy-frontend.result == 'success' }}
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "🌐 Frontend: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+          echo "🚀 API: ${{ needs.deploy-api.outputs.api-url }}"
+
+      - name: ❌ Failure Notification
+        if: ${{ needs.deploy-api.result == 'failure' || needs.deploy-frontend.result == 'failure' }}
+        run: |
+          echo "❌ Deployment failed!"
+          echo "API Status: ${{ needs.deploy-api.result }}"
+          echo "Frontend Status: ${{ needs.deploy-frontend.result }}"
