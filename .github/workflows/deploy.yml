@@ -260,6 +260,43 @@ jobs:
           echo "✅ Deployed to S3!"
           echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
 
+      - name: 🌐 Deploy to S3 with Correct Content Types
+        run: |
+          cd insurance-portal-ui
+          
+          # Find dist directory
+          if [ -d "dist/insurance-portal-ui" ]; then
+            DIST_DIR="dist/insurance-portal-ui"
+          elif [ -d "dist" ]; then
+            DIST_DIR="dist"
+          fi
+          
+          echo "📤 Uploading files with correct content types..."
+          
+          # Upload HTML files with correct content type
+          find "$DIST_DIR" -name "*.html" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
+            --content-type "text/html; charset=utf-8" \
+            --cache-control "no-cache, no-store, must-revalidate" \;
+          
+          # Upload CSS files
+          find "$DIST_DIR" -name "*.css" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
+            --content-type "text/css" \
+            --cache-control "public, max-age=31536000" \;
+          
+          # Upload JS files
+          find "$DIST_DIR" -name "*.js" -exec aws s3 cp {} s3://$S3_BUCKET/{} \
+            --content-type "application/javascript" \
+            --cache-control "public, max-age=31536000" \;
+          
+          # Upload other files (images, fonts, etc.)
+          aws s3 sync "$DIST_DIR/" "s3://$S3_BUCKET/" \
+            --delete \
+            --exclude "*.html" \
+            --exclude "*.css" \
+            --exclude "*.js"
+          
+          echo "✅ Files uploaded with correct content types!"
+
       - name: 🔍 Debug S3 Deployment
         run: |
           echo "🔍 Debugging S3 deployment..."
