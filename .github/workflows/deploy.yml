@@ -84,40 +84,99 @@ jobs:
 
       - name: 🚀 Deploy to App Runner
         run: |
-          STATUS="${{ steps.check-status.outputs.status }}"
+          echo "🔍 Getting current service status..."
+          STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+          echo "📊 Initial status: $STATUS"
 
-          if [[ "$STATUS" == "RUNNING" ]]; then
-            echo "✅ Service is running, starting deployment..."
-            aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-          elif [[ "$STATUS" == "PAUSED" ]]; then
-            echo "⏸️ Service is paused, resuming first..."
-            aws apprunner resume-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-            echo "⏳ Waiting for service to be running..."
-            aws apprunner wait service-running --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-            echo "🚀 Now starting deployment..."
-            aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-          elif [[ "$STATUS" == "DELETE_FAILED" ]] || [[ "$STATUS" == "CREATE_FAILED" ]]; then
-            echo "❌ Service is in failed state: $STATUS"
-            echo "🔧 You may need to recreate the App Runner service manually"
-            exit 1
-          else
-            echo "⚠️ Service status is: $STATUS"
-            echo "⏳ Waiting for service to be ready..."
-            timeout 300 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do echo "Waiting..."; sleep 30; done' || true
+          # Wait for service to be in a stable state first
+          echo "⏳ Ensuring service is in stable RUNNING state..."
+          timeout 300 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do 
+            CURRENT_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+            echo "Waiting for RUNNING state... Current: $CURRENT_STATUS"
+            sleep 15
+          done'
+
+          # Double-check the status before deployment
+          FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+          echo "📊 Verified status before deployment: $FINAL_STATUS"
+
+          if [[ "$FINAL_STATUS" != "RUNNING" ]]; then
+            echo "❌ Service is not in RUNNING state: $FINAL_STATUS"
+            echo "⏳ Waiting additional time for service to stabilize..."
+            sleep 60
             
-            # Try deployment after waiting
-            FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
-            if [[ "$FINAL_STATUS" == "RUNNING" ]]; then
-              echo "✅ Service is now running, starting deployment..."
-              aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}
-            else
-              echo "❌ Service failed to reach RUNNING state: $FINAL_STATUS"
+            RETRY_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+            if [[ "$RETRY_STATUS" != "RUNNING" ]]; then
+              echo "❌ Service failed to reach stable RUNNING state: $RETRY_STATUS"
               exit 1
             fi
           fi
 
+          # Start deployment with retry logic
+          echo "🚀 Starting deployment..."
+          DEPLOYMENT_STARTED=false
+          RETRY_COUNT=0
+          MAX_RETRIES=3
+
+          while [[ $RETRY_COUNT -lt $MAX_RETRIES && "$DEPLOYMENT_STARTED" == false ]]; do
+            if aws apprunner start-deployment --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }}; then
+              echo "✅ Deployment started successfully!"
+              DEPLOYMENT_STARTED=true
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⚠️ Deployment start failed. Retry $RETRY_COUNT/$MAX_RETRIES"
+              if [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; then
+                echo "⏳ Waiting 30 seconds before retry..."
+                sleep 30
+                # Check service status again
+                CURRENT_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+                echo "📊 Service status during retry: $CURRENT_STATUS"
+              fi
+            fi
+          done
+
+          if [[ "$DEPLOYMENT_STARTED" == false ]]; then
+            echo "❌ Failed to start deployment after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
           echo "⏳ Waiting for deployment to complete..."
-          timeout 600 bash -c 'while [[ "$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)" != "RUNNING" ]]; do echo "Deploying..."; sleep 30; done' || true
+          # Wait for deployment to finish with better error handling
+          timeout 900 bash -c '
+            while true; do
+              STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query Service.Status --output text)
+              echo "Current status: $STATUS"
+              
+              case $STATUS in
+                "RUNNING")
+                  echo "✅ Deployment completed successfully!"
+                  break
+                  ;;
+                "OPERATION_IN_PROGRESS")
+                  echo "🔄 Deployment in progress..."
+                  sleep 30
+                  ;;
+                "CREATE_FAILED"|"UPDATE_FAILED"|"DELETE_FAILED")
+                  echo "❌ Deployment failed with status: $STATUS"
+                  exit 1
+                  ;;
+                *)
+                  echo "⏳ Status: $STATUS - continuing to wait..."
+                  sleep 30
+                  ;;
+              esac
+            done
+          ' || {
+            echo "⚠️ Deployment timeout reached"
+            FINAL_STATUS=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.Status' --output text)
+            echo "📊 Final status: $FINAL_STATUS"
+            if [[ "$FINAL_STATUS" != "RUNNING" ]]; then
+              echo "❌ Deployment did not complete successfully"
+              exit 1
+            else
+              echo "✅ Service is running despite timeout"
+            fi
+          }
 
           echo "✅ App Runner deployment completed!"
 
