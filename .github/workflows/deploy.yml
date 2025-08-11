@@ -11,6 +11,7 @@ env:
   ECR_REPOSITORY: insurance-portal-api
   API_SERVICE_ARN: arn:aws:apprunner:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:service/insurance-portal-api/${{ secrets.APP_RUNNER_SERVICE_ID }}
   S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
   test:
@@ -279,6 +280,20 @@ jobs:
 
           echo "✅ S3 deployment complete!"
           echo "🌐 Website URL: http://$S3_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+
+      - name: 🔄 Invalidate CloudFront Cache
+        run: |
+          echo "🔄 Invalidating CloudFront cache for distribution: $CLOUDFRONT_DISTRIBUTION_ID"
+
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id $CLOUDFRONT_DISTRIBUTION_ID \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "✅ Cache invalidation created: $INVALIDATION_ID"
+          echo "🌐 HTTPS URL: https://$(aws cloudfront get-distribution --id $CLOUDFRONT_DISTRIBUTION_ID --query 'Distribution.DomainName' --output text)"
+          echo "⏳ Cache invalidation takes 3-5 minutes to complete"
 
   notify:
     name: 📢 Deployment Complete
