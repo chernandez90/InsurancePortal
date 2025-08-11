@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { ClaimService, InsuranceClaim } from '../services/claim.service';
 import { SignalRService } from '../services/signalr.service';
+import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -82,9 +83,7 @@ import { Subscription } from 'rxjs';
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
-
       .claims-header {
         background: white;
         padding: 1rem 2rem;
@@ -95,7 +94,6 @@ import { Subscription } from 'rxjs';
         align-items: center;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
-
       .claims-header h2 {
         margin: 0;
         color: #333;
@@ -204,12 +202,10 @@ import { Subscription } from 'rxjs';
       }
 
       .claim-item {
-        border: 2px solid #dee2e6;
-        margin: 15px 0;
-        padding: 20px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        background-color: white;
+        border: 1px solid #ddd;
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 8px;
       }
 
       .claim-item:hover {
@@ -305,7 +301,9 @@ export class ClaimsListComponent implements OnInit, OnDestroy {
 
   constructor(
     private claimService: ClaimService,
-    private signalRService: SignalRService
+    private signalRService: SignalRService,
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -364,5 +362,14 @@ export class ClaimsListComponent implements OnInit, OnDestroy {
 
   isNewClaim(claimId: number): boolean {
     return this.newClaimIds.has(claimId);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
