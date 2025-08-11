@@ -31,9 +31,6 @@ import { AuthService } from '../services/auth.service';
             <button (click)="goToClaimsList()" class="btn btn-primary">
               📋 View All Claims
             </button>
-            <button (click)="goToClaims()" class="btn btn-secondary">
-              ➕ Submit New Claim
-            </button>
             <button (click)="goToDocuments()" class="btn btn-primary">
               📄 Documents
             </button>

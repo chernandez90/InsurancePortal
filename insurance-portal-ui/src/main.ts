@@ -24,11 +24,6 @@ const routes: Routes = [
       ),
   },
   {
-    path: 'claims',
-    loadComponent: () =>
-      import('./app/claims/claims.component').then((c) => c.ClaimsComponent),
-  },
-  {
     path: 'claim-form',
     loadComponent: () =>
       import('./app/claim-form/claim-form.component').then(

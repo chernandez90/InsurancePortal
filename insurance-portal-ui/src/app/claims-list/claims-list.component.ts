@@ -80,10 +80,11 @@ import { Subscription } from 'rxjs';
   styles: [
     `
       .claims-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+        min-height: 100vh;
+        background-color: #f5f5f5;
+        padding: 1rem;
       }
+
       .claims-header {
         background: white;
         padding: 1rem 2rem;
@@ -94,6 +95,7 @@ import { Subscription } from 'rxjs';
         align-items: center;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
+
       .claims-header h2 {
         margin: 0;
         color: #333;
@@ -113,17 +115,17 @@ import { Subscription } from 'rxjs';
       }
 
       .btn-secondary {
-        background: #28a745;
+        background: #6c757d;
         color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #545b62;
       }
 
       .btn-logout {
         background: #dc3545;
         color: white;
-      }
-
-      .btn-secondary:hover {
-        background: #218838;
       }
 
       .btn-logout:hover {
@@ -132,21 +134,25 @@ import { Subscription } from 'rxjs';
 
       .main-content {
         background: white;
-        padding: 1rem;
+        padding: 2rem;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .connection-status {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 20px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
       }
 
       .status-indicator {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
         background-color: #dc3545;
       }
@@ -158,134 +164,97 @@ import { Subscription } from 'rxjs';
       .status-text {
         font-size: 0.9em;
         color: #666;
+        font-weight: 500;
       }
 
       .updates-panel {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
-        border: 2px solid #2196f3;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
       }
 
       .updates-panel h4 {
-        margin: 0 0 15px 0;
-        color: #1976d2;
+        margin: 0 0 1rem 0;
+        color: #007bff;
+        font-size: 1.1rem;
       }
 
       .update-item {
         background-color: white;
-        padding: 12px;
-        margin: 8px 0;
-        border-radius: 8px;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
         font-size: 0.9em;
-        border-left: 4px solid #2196f3;
-        animation: slideIn 0.3s ease-out;
-      }
-
-      .update-time {
-        color: #666;
-        font-size: 0.8em;
-        margin-right: 8px;
-      }
-
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        border-left: 3px solid #007bff;
       }
 
       .claim-item {
-        border: 1px solid #ddd;
-        margin: 10px 0;
-        padding: 15px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        margin: 1rem 0;
+        padding: 1.5rem;
         border-radius: 8px;
-      }
-
-      .claim-item:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px);
-      }
-
-      .claim-item.new-claim {
-        border-color: #28a745;
-        background-color: #f8fff9;
-        animation: glow 2s ease-in-out;
-      }
-
-      @keyframes glow {
-        0%,
-        100% {
-          box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
-        }
-        50% {
-          box-shadow: 0 0 20px rgba(40, 167, 69, 0.6);
-        }
       }
 
       .claim-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 1rem;
       }
 
       .claim-header h3 {
         margin: 0;
-        color: #343a40;
+        color: #007bff;
+        font-size: 1.2rem;
       }
 
       .policy-number {
         background-color: #6c757d;
         color: white;
-        padding: 6px 12px;
+        padding: 0.5rem 1rem;
         border-radius: 20px;
         font-size: 0.85em;
         font-weight: 500;
       }
 
       .description {
-        color: #495057;
-        margin: 10px 0;
+        color: #666;
+        margin: 0.75rem 0;
         line-height: 1.5;
       }
 
       .date-filed {
-        color: #6c757d;
+        color: #999;
         font-size: 0.9em;
       }
 
       .add-claim-btn {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        background: #007bff;
         color: white;
         border: none;
-        padding: 14px 28px;
-        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
         cursor: pointer;
-        margin-top: 25px;
-        font-size: 1.1em;
+        margin-top: 1.5rem;
+        font-size: 1rem;
         font-weight: 500;
-        transition: all 0.2s;
-        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        text-decoration: none;
+        display: inline-block;
       }
 
       .add-claim-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+        background: #0056b3;
       }
 
       .loading,
       .no-claims {
         text-align: center;
-        padding: 40px;
-        font-size: 1.1em;
-        color: #6c757d;
+        padding: 2rem;
+        color: #666;
+        font-size: 1.1rem;
       }
     `,
   ],
