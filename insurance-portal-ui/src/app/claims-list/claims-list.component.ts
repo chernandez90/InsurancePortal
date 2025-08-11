@@ -11,8 +11,19 @@ import { Subscription } from 'rxjs';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="claims-container">
-      <div class="header">
+      <!-- ADD THIS HEADER SECTION -->
+      <header class="claims-header">
         <h2>Insurance Claims</h2>
+        <div class="header-actions">
+          <button (click)="goToDashboard()" class="btn btn-secondary">
+            ← Back to Dashboard
+          </button>
+          <button (click)="logout()" class="btn btn-logout">Logout</button>
+        </div>
+      </header>
+
+      <!-- Move connection status inside main content -->
+      <div class="main-content">
         <div class="connection-status">
           <span
             class="status-indicator"
@@ -21,46 +32,48 @@ import { Subscription } from 'rxjs';
           ></span>
           <span class="status-text">{{ connectionStatus }}</span>
         </div>
-      </div>
 
-      <!-- Real-time Updates Panel -->
-      <div *ngIf="realtimeMessages.length > 0" class="updates-panel">
-        <h4>🔄 Recent Updates</h4>
-        <div
-          *ngFor="let message of realtimeMessages.slice(0, 3)"
-          class="update-item"
-        >
-          <span class="update-time">{{ getCurrentTime() }}</span>
-          {{ message }}
-        </div>
-      </div>
-
-      <div *ngIf="loading" class="loading">⏳ Loading claims...</div>
-
-      <div *ngIf="!loading && claims.length === 0" class="no-claims">
-        📋 No claims found.
-      </div>
-
-      <div *ngIf="!loading && claims.length > 0" class="claims-list">
-        <div
-          *ngFor="let claim of claims"
-          class="claim-item"
-          [class.new-claim]="isNewClaim(claim.id)"
-        >
-          <div class="claim-header">
-            <h3>🏥 Claim #{{ claim.id }}</h3>
-            <span class="policy-number">Policy: {{ claim.policyNumber }}</span>
-          </div>
-          <p class="description">{{ claim.description }}</p>
-          <span class="date-filed"
-            >📅 Filed: {{ claim.dateFiled | date : 'short' }}</span
+        <!-- Real-time Updates Panel -->
+        <div *ngIf="realtimeMessages.length > 0" class="updates-panel">
+          <h4>🔄 Recent Updates</h4>
+          <div
+            *ngFor="let message of realtimeMessages.slice(0, 3)"
+            class="update-item"
           >
+            <span class="update-time">{{ getCurrentTime() }}</span>
+            {{ message }}
+          </div>
         </div>
-      </div>
 
-      <button class="add-claim-btn" routerLink="/claim-form">
-        ➕ Submit New Claim
-      </button>
+        <div *ngIf="loading" class="loading">⏳ Loading claims...</div>
+
+        <div *ngIf="!loading && claims.length === 0" class="no-claims">
+          📋 No claims found.
+        </div>
+
+        <div *ngIf="!loading && claims.length > 0" class="claims-list">
+          <div
+            *ngFor="let claim of claims"
+            class="claim-item"
+            [class.new-claim]="isNewClaim(claim.id)"
+          >
+            <div class="claim-header">
+              <h3>🏥 Claim #{{ claim.id }}</h3>
+              <span class="policy-number"
+                >Policy: {{ claim.policyNumber }}</span
+              >
+            </div>
+            <p class="description">{{ claim.description }}</p>
+            <span class="date-filed"
+              >📅 Filed: {{ claim.dateFiled | date : 'short' }}</span
+            >
+          </div>
+        </div>
+
+        <button class="add-claim-btn" routerLink="/claim-form">
+          ➕ Submit New Claim
+        </button>
+      </div>
     </div>
   `,
   styles: [
@@ -72,17 +85,65 @@ import { Subscription } from 'rxjs';
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
 
-      .header {
+      .claims-header {
+        background: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .claims-header h2 {
+        margin: 0;
+        color: #333;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .btn-secondary {
+        background: #28a745;
+        color: white;
+      }
+
+      .btn-logout {
+        background: #dc3545;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #218838;
+      }
+
+      .btn-logout:hover {
+        background: #c82333;
+      }
+
+      .main-content {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .connection-status {
         display: flex;
         align-items: center;
         gap: 8px;
+        margin-bottom: 20px;
       }
 
       .status-indicator {
