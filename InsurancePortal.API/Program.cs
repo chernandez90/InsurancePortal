@@ -24,6 +24,8 @@ builder.Services.AddCors(options =>
     {
         var allowedOrigins = new List<string>
         {
+            "http://insurance-portal-ui-1430084852.s3-website-us-east-1.amazonaws.com",
+            "https://dbt37z8ccjs2e.cloudfront.net", // Add your CloudFront domain
             "http://localhost:4200",  // Angular dev server
             "https://localhost:4200", // Angular dev server HTTPS
             "https://localhost:7018", // Your API (for testing)

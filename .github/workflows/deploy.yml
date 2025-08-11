@@ -215,19 +215,22 @@ jobs:
           cd insurance-portal-ui
           npm ci
 
-      - name: 🔧 Update environment files
+      - name: 🔧 Update environment for production
         run: |
           cd insurance-portal-ui/src/environments
+
+          # Get the API URL from App Runner
+          API_URL=$(aws apprunner describe-service --service-arn ${{ env.API_SERVICE_ARN }} --region ${{ env.AWS_REGION }} --query 'Service.ServiceUrl' --output text)
 
           cat > environment.prod.ts << EOF
           export const environment = {
             production: true,
-            apiUrl: '${{ needs.deploy-api.outputs.api-url }}',
-            signalRUrl: '${{ needs.deploy-api.outputs.api-url }}/claimHub'
+            apiUrl: 'https://$API_URL',
+            signalRUrl: 'https://$API_URL/claimHub'
           };
           EOF
 
-          echo "✅ Environment files updated!"
+          echo "✅ Environment updated with API URL: https://$API_URL"
 
       - name: 🔨 Build Angular
         run: |
