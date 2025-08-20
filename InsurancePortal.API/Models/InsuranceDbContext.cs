@@ -10,5 +10,6 @@ namespace InsurancePortal.API.Models
 
         public DbSet<InsuranceClaim> Claims { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<CustomerProfile> CustomerProfiles { get; set; }
     }
 }

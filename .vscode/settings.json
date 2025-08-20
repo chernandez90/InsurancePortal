@@ -12,6 +12,6 @@
   },
   "prettier.disableLanguages": ["markdown"],
   "editor.codeActionsOnSave": {
-    "source.fixAll": false
+    "source.fixAll": "never"
   }
 }
