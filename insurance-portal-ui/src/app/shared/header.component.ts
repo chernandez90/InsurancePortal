@@ -19,14 +19,24 @@ import { ProfileService } from '../services/profile.service';
         >
           ☰
         </button>
-        <nav
-          *ngIf="isAuthenticated && !hideNav"
-          class="nav-links"
-          [class.open]="menuOpen"
-        >
-          <a routerLink="/dashboard" (click)="menuOpen = false">Dashboard</a>
-          <a routerLink="/claims-list" (click)="menuOpen = false">Claims</a>
-          <a routerLink="/claim-form" (click)="menuOpen = false"
+        <nav *ngIf="!hideNav" class="nav-links" [class.open]="menuOpen">
+          <a routerLink="/demo" (click)="menuOpen = false">Demo</a>
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/dashboard"
+            (click)="menuOpen = false"
+            >Dashboard</a
+          >
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/claims-list"
+            (click)="menuOpen = false"
+            >Claims</a
+          >
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/claim-form"
+            (click)="menuOpen = false"
             >Submit Claim</a
           >
         </nav>

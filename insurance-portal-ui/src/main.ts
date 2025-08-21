@@ -53,6 +53,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'demo',
+    loadComponent: () =>
+      import('./app/demo/demo.component').then((c) => c.DemoComponent),
+  },
+  {
     path: 'profile',
     loadComponent: () =>
       import('./app/profile/profile.component').then((c) => c.ProfileComponent),

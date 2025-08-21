@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#f5f7fb"/>
+      <stop offset="1" stop-color="#eef6f9"/>
+    </linearGradient>
+    <style>
+      .card { fill: #ffffff; stroke: #e6e9ef; rx:12; ry:12 }
+      .title { font: 700 28px/1.1 'Segoe UI', Roboto, Arial; fill:#233; }
+      .sub { font: 500 16px/1.2 'Segoe UI', Roboto, Arial; fill:#556; }
+      .badge { font:600 12px/1 'Segoe UI', Roboto, Arial; fill:#fff }
+      .small { font: 400 13px/1 'Segoe UI', Roboto, Arial; fill:#666 }
+      .btn { fill:#007bff; rx:6; ry:6 }
+      .btn-txt{ font:600 14px 'Segoe UI', Roboto, Arial; fill:#fff }
+    </style>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#g)" />
+
+  <!-- Header -->
+  <rect x="24" y="24" width="1152" height="72" rx="10" ry="10" fill="#fff" stroke="#e6e9ef" />
+  <text x="48" y="68" class="title">🏢 Insurance Portal</text>
+
+  <!-- Hero -->
+  <g transform="translate(24,112)">
+    <rect class="card" x="0" y="0" width="1152" height="140" rx="12"/>
+    <text x="28" y="44" class="title">Alex Demo</text>
+    <text x="28" y="76" class="sub">Active policies: <tspan style="font-weight:700">2</tspan> &nbsp;•&nbsp; Recent claims: <tspan style="font-weight:700">1</tspan></text>
+  </g>
+
+  <!-- Cards -->
+  <g transform="translate(24,280)">
+    <rect class="card" x="0" y="0" width="560" height="240" rx="12"/>
+    <text x="24" y="36" class="title" style="font-size:20px">Auto Policy <tspan class="small" style="font-size:12px; font-weight:600; background:none">Active</tspan></text>
+    <text x="24" y="74" class="small">Policy #: <tspan style="font-weight:700">AUTO-2025-0001</tspan></text>
+    <text x="24" y="100" class="small">Effective: 2025-06-01 — Expiry: 2026-06-01</text>
+    <rect x="24" y="152" width="120" height="36" class="btn"/>
+    <text x="50" y="176" class="btn-txt">View Details</text>
+    <rect x="156" y="152" width="140" height="36" fill="#fff" stroke="#d7dbe4" rx="6"/>
+    <text x="174" y="176" class="small" fill="#333">Download PDF</text>
+  </g>
+
+  <g transform="translate(620,280)">
+    <rect class="card" x="0" y="0" width="556" height="240" rx="12"/>
+    <text x="24" y="36" class="title" style="font-size:20px">Recent Claim <tspan class="badge" fill="#856404" style="font-size:12px; background:none">In review</tspan></text>
+    <text x="24" y="74" class="small">Claim #: <tspan style="font-weight:700">CLM-1009</tspan></text>
+    <text x="24" y="100" class="small">Loss date: 2025-07-15 — Amount: $2,400 (estimated)</text>
+    <g transform="translate(24,140)">
+      <rect x="0" y="0" width="80" height="28" rx="6" fill="#e6f9ec" stroke="#d7efd6" />
+      <text x="12" y="18" class="small" fill="#027a3b">Submitted</text>
+      <rect x="96" y="0" width="80" height="28" rx="6" fill="#e6f9ec" stroke="#d7efd6" />
+      <text x="110" y="18" class="small" fill="#027a3b">Assigned</text>
+      <rect x="192" y="0" width="80" height="28" rx="6" fill="#fff3cd" stroke="#f1e3b8" />
+      <text x="206" y="18" class="small" fill="#856404">In review</text>
+    </g>
+    <rect x="24" y="188" width="120" height="36" class="btn"/>
+    <text x="50" y="212" class="btn-txt">View Claim</text>
+  </g>
+
+  <!-- Footer note -->
+  <text x="48" y="646" class="small">DEMO MODE — Data is mocked and read-only. For full functionality run locally.</text>
+</svg>

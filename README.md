@@ -11,6 +11,41 @@
 
 ## 🎯 Key Features
 
+## 🎛️ Try the Demo
+
+We added a lightweight demo page to let reviewers explore the UI without signing up.
+
+- Open the demo: `https://{FRONTEND_URL}/demo` (or run locally at `http://localhost:4200/demo`)
+- Screenshot (demo):
+
+![Demo preview](insurance-portal-ui/public/assets/demo/demo-screenshot.png)
+
+The demo page shows sample policies, a recent claim, and quick actions for evaluating UX flows.
+
+### Capturing screenshots & GIFs
+
+You can generate a screenshot or a short GIF of the demo page locally (requires Node.js).
+
+1. Start the frontend locally:
+
+```bash
+cd insurance-portal-ui
+npm install
+npm start
+```
+
+2. Capture a screenshot:
+
+```bash
+cd insurance-portal-ui
+npm run demo:screenshot -- http://localhost:4200/demo public/assets/demo/demo-screenshot.png
+```
+
+The script uses Puppeteer to open the demo route and save the output to `insurance-portal-ui/public/assets/demo/`.
+
+Note: GIF generation is optional but requires additional native dependencies (node-canvas) and platform toolchains (build-essential / Visual C++). If you need GIFs, I can add a separate, opt-in script and instructions for your OS.
+
+
 ### 🔄 Real-Time Updates
 
 - **SignalR WebSocket integration** for instant claim status updates
