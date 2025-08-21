@@ -33,9 +33,9 @@ namespace InsurancePortal.API.Controllers
         {
             var result = await _authService.RegisterAsync(registerDto);
 
-            if (!result.Success)
+            if (result == null || !result.Success)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result?.Error ?? "Registration failed");
             }
 
             return Ok(result.AuthResponse);

@@ -36,16 +36,16 @@ namespace InsurancePortal.API.Services
             };
         }
 
-        public async Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto)
+        public async Task<RegisterResultDto?> RegisterAsync(RegisterDto registerDto)
         {
             if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
             {
-                return new RegisterResultDto { Success = false, Error = "Username already exists" };
+                return null;
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
-                return new RegisterResultDto { Success = false, Error = "Email already exists" };
+                return null;
             }
 
             var user = new User
