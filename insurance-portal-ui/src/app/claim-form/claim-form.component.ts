@@ -14,80 +14,91 @@ import { ClaimService, ClaimDto } from '../services/claim.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="form-container">
-      <h2>Submit New Claim</h2>
+    <div class="page-container">
+      <div class="form-card">
+        <h2>Submit New Claim</h2>
 
-      <form [formGroup]="claimForm" (ngSubmit)="onSubmit()">
-        <div class="form-group">
-          <label for="policyNumber">Policy Number *</label>
-          <input
-            id="policyNumber"
-            type="text"
-            formControlName="policyNumber"
-            class="form-control"
-          />
-          <div
-            *ngIf="
-              claimForm.get('policyNumber')?.invalid &&
-              claimForm.get('policyNumber')?.touched
-            "
-            class="error"
-          >
-            Policy number is required (minimum 5 characters)
+        <form [formGroup]="claimForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="policyNumber">Policy Number *</label>
+            <input
+              id="policyNumber"
+              type="text"
+              formControlName="policyNumber"
+              class="form-control"
+            />
+            <div
+              *ngIf="
+                claimForm.get('policyNumber')?.invalid &&
+                claimForm.get('policyNumber')?.touched
+              "
+              class="error"
+            >
+              Policy number is required (minimum 5 characters)
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="description">Description *</label>
-          <textarea
-            id="description"
-            formControlName="description"
-            rows="4"
-            class="form-control"
-          >
-          </textarea>
-          <div
-            *ngIf="
-              claimForm.get('description')?.invalid &&
-              claimForm.get('description')?.touched
-            "
-            class="error"
-          >
-            Description is required (minimum 10 characters)
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="4"
+              class="form-control"
+            >
+            </textarea>
+            <div
+              *ngIf="
+                claimForm.get('description')?.invalid &&
+                claimForm.get('description')?.touched
+              "
+              class="error"
+            >
+              Description is required (minimum 10 characters)
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="dateFiled">Date Filed *</label>
-          <input
-            id="dateFiled"
-            type="date"
-            formControlName="dateFiled"
-            class="form-control"
-          />
-        </div>
+          <div class="form-group">
+            <label for="dateFiled">Date Filed *</label>
+            <input
+              id="dateFiled"
+              type="date"
+              formControlName="dateFiled"
+              class="form-control"
+            />
+          </div>
 
-        <div class="form-actions">
-          <button
-            type="submit"
-            [disabled]="!claimForm.valid || submitting"
-            class="submit-btn"
-          >
-            {{ submitting ? 'Submitting...' : 'Submit Claim' }}
-          </button>
-          <button type="button" (click)="goBack()" class="cancel-btn">
-            Cancel
-          </button>
-        </div>
-      </form>
+          <div class="form-actions">
+            <button
+              type="submit"
+              [disabled]="!claimForm.valid || submitting"
+              class="submit-btn"
+            >
+              {{ submitting ? 'Submitting...' : 'Submit Claim' }}
+            </button>
+            <button type="button" (click)="goBack()" class="cancel-btn">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   `,
   styles: [
     `
-      .form-container {
-        max-width: 600px;
+      .page-container {
+        min-height: 100vh;
+        background-color: #f5f5f5;
+        padding: 1rem;
+      }
+
+      .form-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
       }
       .form-group {
         margin-bottom: 20px;

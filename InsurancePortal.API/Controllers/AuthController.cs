@@ -32,13 +32,13 @@ namespace InsurancePortal.API.Controllers
         public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto registerDto)
         {
             var result = await _authService.RegisterAsync(registerDto);
-            
-            if (result == null)
+
+            if (!result.Success)
             {
-                return BadRequest("Username already exists");
+                return BadRequest(result.Error);
             }
 
-            return Ok(result);
+            return Ok(result.AuthResponse);
         }
     }
 }

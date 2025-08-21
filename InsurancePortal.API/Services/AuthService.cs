@@ -36,11 +36,16 @@ namespace InsurancePortal.API.Services
             };
         }
 
-        public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto)
+        public async Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto)
         {
             if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
             {
-                return null; // User already exists
+                return new RegisterResultDto { Success = false, Error = "Username already exists" };
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+            {
+                return new RegisterResultDto { Success = false, Error = "Email already exists" };
             }
 
             var user = new User
@@ -56,12 +61,16 @@ namespace InsurancePortal.API.Services
 
             var token = _jwtService.GenerateToken(user);
 
-            return new AuthResponseDto
+            return new RegisterResultDto
             {
-                Token = token,
-                Username = user.Username,
-                Email = user.Email,
-                Role = user.Role
+                Success = true,
+                AuthResponse = new AuthResponseDto
+                {
+                    Token = token,
+                    Username = user.Username,
+                    Email = user.Email,
+                    Role = user.Role
+                }
             };
         }
     }

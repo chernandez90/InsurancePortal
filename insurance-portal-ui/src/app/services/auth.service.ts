@@ -75,6 +75,16 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  // Allow other components/services to update the current user state
+  setCurrentUser(user: any): void {
+    this.currentUserSubject.next(user);
+  }
+
+  // Snapshot of current user (useful for merging updates)
+  getCurrentUserSnapshot(): any {
+    return this.currentUserSubject.getValue();
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     this.tokenSubject.next(null);

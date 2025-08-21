@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, LoginDto } from '../services/auth.service';
+import { ProfileService, ProfilePayload } from '../services/profile.service';
 
 @Component({
   selector: 'app-login',
@@ -185,7 +186,8 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private profileService: ProfileService
   ) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
@@ -207,21 +209,35 @@ export class LoginComponent {
           console.log('✅ Login successful:', response);
           this.loading = false;
 
-          console.log('🚀 Attempting navigation to dashboard...');
-          this.router
-            .navigate(['/dashboard'])
-            .then((success) => {
-              console.log('🎯 Navigation result:', success);
-              if (success) {
-                console.log('✅ Navigation successful!');
+          // After login, check whether the user already has a profile.
+          // If profile exists and has a name, go to dashboard. Otherwise
+          // redirect to the register flow's profile step so the user can
+          // finish onboarding.
+          const token = response?.token || this.authService.getToken();
+          this.profileService.getProfile(token).subscribe({
+            next: (profile) => {
+              const hasName = !!(
+                profile &&
+                (profile.firstName || profile.lastName)
+              );
+              if (hasName) {
+                this.router
+                  .navigate(['/dashboard'])
+                  .catch((e) => console.error('Navigation error:', e));
               } else {
-                console.error('❌ Navigation failed - trying window.location');
-                window.location.href = '/dashboard';
+                // No profile or missing name -> send user to profile-setup
+                this.router
+                  .navigate(['/profile-setup'])
+                  .catch((e) => console.error('Navigation error:', e));
               }
-            })
-            .catch((error) => {
-              console.error('❌ Navigation error:', error);
-            });
+            },
+            error: (err) => {
+              // Treat errors as "no profile" and send user to profile-setup
+              this.router
+                .navigate(['/profile-setup'])
+                .catch((e) => console.error('Navigation error:', e));
+            },
+          });
         },
         error: (error) => {
           console.error('❌ Login error:', error);

@@ -5,24 +5,14 @@ import { ClaimService, InsuranceClaim } from '../services/claim.service';
 import { SignalRService } from '../services/signalr.service';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
+import { HeaderComponent } from '../shared/header.component';
 
 @Component({
   selector: 'app-claims-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, HeaderComponent],
   template: `
     <div class="claims-container">
-      <!-- ADD THIS HEADER SECTION -->
-      <header class="claims-header">
-        <h2>Insurance Claims</h2>
-        <div class="header-actions">
-          <button (click)="goToDashboard()" class="btn btn-secondary">
-            ← Back to Dashboard
-          </button>
-          <button (click)="logout()" class="btn btn-logout">Logout</button>
-        </div>
-      </header>
-
       <!-- Move connection status inside main content -->
       <div class="main-content">
         <div class="connection-status">

@@ -1,23 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { HeaderComponent } from '../shared/header.component';
 import { AuthService } from '../services/auth.service';
+import { ProfileService } from '../services/profile.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HeaderComponent],
   template: `
     <div class="dashboard-container">
-      <header class="dashboard-header">
-        <h2>🏢 Insurance Portal Dashboard</h2>
-        <div class="user-info">
-          <span>Welcome back!</span>
-          <button (click)="logout()" class="btn btn-logout">Logout</button>
-        </div>
-      </header>
-
       <main class="dashboard-content">
+        <div class="welcome-banner">
+          <h1>Welcome back, {{ firstNameOnly }}!</h1>
+        </div>
         <p>Dashboard functionality will be implemented here.</p>
         <div class="test-info">
           <h3>✅ Login Successful!</h3>
@@ -50,27 +47,7 @@ import { AuthService } from '../services/auth.service';
         padding: 1rem;
       }
 
-      .dashboard-header {
-        background: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      .dashboard-header h2 {
-        margin: 0;
-        color: #333;
-      }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
+      /* header styles moved to shared/header.component.ts */
 
       .dashboard-content {
         background: white;
@@ -163,10 +140,43 @@ import { AuthService } from '../services/auth.service';
   ],
 })
 export class DashboardComponent implements OnInit {
-  constructor(private authService: AuthService, private router: Router) {}
+  displayName: string | null = null;
+  get firstNameOnly(): string {
+    if (!this.displayName) return '';
+    // if email, show the part before @; otherwise show first word
+    if (this.displayName.includes('@')) return this.displayName.split('@')[0];
+    return this.displayName.split(' ')[0];
+  }
+  get initials(): string {
+    if (!this.displayName) return '';
+    return this.displayName.charAt(0).toUpperCase();
+  }
+  constructor(
+    private authService: AuthService,
+    private profileService: ProfileService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    console.log('Dashboard component loaded successfully!');
+    // Subscribe to current user and display their name or email when available
+    this.authService.currentUser$.subscribe((user) => {
+      this.displayName = user?.username || user?.email || null;
+
+      // attempt to fetch fuller profile (first/last name) if token is available
+      const token = this.authService.getToken();
+      if (token) {
+        this.profileService.getProfile(token).subscribe({
+          next: (profile) => {
+            if (profile?.firstName) {
+              this.displayName = profile.firstName;
+            }
+          },
+          error: () => {
+            // ignore - keep username/email if profile not available
+          },
+        });
+      }
+    });
   }
 
   logout(): void {
@@ -188,7 +198,6 @@ export class DashboardComponent implements OnInit {
   }
 
   goToProfile(): void {
-    // Placeholder for future implementation
-    alert('Profile section coming soon!');
+    this.router.navigate(['/profile']);
   }
 }
