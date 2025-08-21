@@ -181,6 +181,6 @@ export class ClaimFormComponent {
   }
 
   goBack(): void {
-    this.router.navigate(['/claims']);
+    this.router.navigate(['/dashboard']);
   }
 }
