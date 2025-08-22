@@ -58,9 +58,41 @@ const routes: Routes = [
       import('./app/demo/demo.component').then((c) => c.DemoComponent),
   },
   {
+    path: 'marketplace',
+    loadComponent: () =>
+      import('./app/marketplace/marketplace.component').then(
+        (c) => c.MarketplaceComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'my-policies',
+    loadComponent: () =>
+      import('./app/my-policies/my-policies.component').then(
+        (c) => c.MyPoliciesComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'my-assets',
+    loadComponent: () =>
+      import('./app/my-assets/my-assets.component').then(
+        (c) => c.MyAssetsComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'profile',
     loadComponent: () =>
       import('./app/profile/profile.component').then((c) => c.ProfileComponent),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'beneficiaries',
+    loadComponent: () =>
+      import('./app/beneficiaries/beneficiaries.component').then(
+        (c) => c.BeneficiariesComponent
+      ),
     canActivate: [AuthGuard],
   },
   { path: '**', redirectTo: '/login' },

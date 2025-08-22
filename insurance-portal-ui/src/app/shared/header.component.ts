@@ -29,6 +29,30 @@ import { ProfileService } from '../services/profile.service';
           >
           <a
             *ngIf="isAuthenticated"
+            routerLink="/marketplace"
+            (click)="menuOpen = false"
+            >Marketplace</a
+          >
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/my-assets"
+            (click)="menuOpen = false"
+            >My Assets</a
+          >
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/beneficiaries"
+            (click)="menuOpen = false"
+            >Beneficiaries</a
+          >
+          <a
+            *ngIf="isAuthenticated"
+            routerLink="/my-policies"
+            (click)="menuOpen = false"
+            >My Policies</a
+          >
+          <a
+            *ngIf="isAuthenticated"
             routerLink="/claims-list"
             (click)="menuOpen = false"
             >Claims</a

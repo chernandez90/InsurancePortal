@@ -13,7 +13,11 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // Use camelCase in JSON responses to match front-end expectations
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -155,8 +159,11 @@ builder.Services.AddSignalR(options =>
 })
 .AddJsonProtocol(); // Ensure JSON protocol is available for all transports
 
-// API Controllers
-builder.Services.AddControllers();
+// API Controllers (repeat registration kept for safety, apply same JSON options)
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -229,6 +236,34 @@ app.Lifetime.ApplicationStarted.Register(() =>
     logger.LogInformation("📚 Swagger UI available at: /swagger");
     logger.LogInformation("🌍 Environment: {Environment}", app.Environment.EnvironmentName);
 });
+// Seed demo marketplace data for the in-memory database (safe: only runs when empty)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<InsuranceDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        if (!db.Policies.Any())
+        {
+            db.Policies.AddRange(
+                new InsurancePolicy { Id = Guid.NewGuid(), Code = "AUTO-001", Name = "Auto Basic", Description = "Liability coverage for your vehicle.", MonthlyPremium = 79.99m, IsActive = true },
+                new InsurancePolicy { Id = Guid.NewGuid(), Code = "HOME-001", Name = "Home Starter", Description = "Basic homeowners coverage.", MonthlyPremium = 49.99m, IsActive = true },
+                new InsurancePolicy { Id = Guid.NewGuid(), Code = "LIFE-001", Name = "Term Life 10yr", Description = "Affordable term life insurance.", MonthlyPremium = 19.99m, IsActive = true }
+            );
+            db.SaveChanges();
+            logger.LogInformation("Seeded {Count} policies into the database.", db.Policies.Count());
+        }
+        else
+        {
+            logger.LogInformation("Policies table already has data; skipping seeding.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to seed policies.");
+    }
+}
 
 app.Run();
 // This is the entry point for the application

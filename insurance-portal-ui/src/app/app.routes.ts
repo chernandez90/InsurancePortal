@@ -13,5 +13,13 @@ export const routes: Routes = [
       import('./profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'beneficiaries',
+    loadComponent: () =>
+      import('./beneficiaries/beneficiaries.component').then(
+        (m) => m.BeneficiariesComponent
+      ),
+    canActivate: [AuthGuard],
+  },
   // existing routes can be added here; keep root redirect if desired
 ];
