@@ -10,6 +10,7 @@ export interface Policy {
   description: string;
   monthlyPremium: number;
   isActive: boolean;
+  supportedAssetType?: string | null;
 }
 
 export interface UserPolicy {
@@ -20,6 +21,7 @@ export interface UserPolicy {
   isActive: boolean;
   policy: Policy;
   assetId?: string | null;
+  beneficiaryId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,8 +40,15 @@ export class PolicyService {
     );
   }
 
-  purchase(policyId: string, assetId?: string | null) {
-    const qs = assetId ? `?assetId=${assetId}` : '';
+  purchase(
+    policyId: string,
+    assetId?: string | null,
+    beneficiaryId?: string | null
+  ) {
+    const parts: string[] = [];
+    if (assetId) parts.push(`assetId=${assetId}`);
+    if (beneficiaryId) parts.push(`beneficiaryId=${beneficiaryId}`);
+    const qs = parts.length ? `?${parts.join('&')}` : '';
     return this.http.post(`${this.base}/${policyId}/purchase${qs}`, {});
   }
 

@@ -148,12 +148,15 @@ export class MarketplaceComponent {
 
   buy(p: Policy) {
     this.loading = true;
-    // if the user selected an asset for this policy, pick it up from a select element named by code
+    // if the user selected an asset or beneficiary for this policy, pick it up from a select element named by code
     const sel = document.querySelector<HTMLSelectElement>(
       `select[data-policy="${p.id}"]`
     );
-    const assetId = sel ? sel.value || undefined : undefined;
-    this.svc.purchase(p.id, assetId).subscribe({
+    const value = sel ? sel.value || undefined : undefined;
+    const isLife = this.allowedType(p) === 'Life';
+    const assetId = !isLife ? value : undefined;
+    const beneficiaryId = isLife ? value : undefined;
+    this.svc.purchase(p.id, assetId, beneficiaryId).subscribe({
       next: () => {
         this.loading = false;
         this.snack.show('Policy added to your account', { type: 'success' });

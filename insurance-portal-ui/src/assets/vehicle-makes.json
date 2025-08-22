@@ -1,0 +1,101 @@
+{
+  "makes": [
+    "Toyota",
+    "Honda",
+    "Ford",
+    "Chevrolet",
+    "Nissan",
+    "BMW",
+    "Mercedes",
+    "Volkswagen",
+    "Hyundai",
+    "Kia",
+    "Subaru",
+    "Tesla",
+    "Audi",
+    "Mazda",
+    "Lexus",
+    "Acura",
+    "Dodge"
+  ],
+  "modelsByMake": {
+    "Toyota": [
+      { "name": "Camry", "minYear": 1990 },
+      { "name": "Corolla", "minYear": 1990 },
+      { "name": "RAV4", "minYear": 1996 }
+    ],
+    "Honda": [
+      { "name": "Civic", "minYear": 1992 },
+      { "name": "Accord", "minYear": 1990 },
+      { "name": "CR-V", "minYear": 1996 }
+    ],
+    "Ford": [
+      { "name": "F-150", "minYear": 1990 },
+      { "name": "Focus", "minYear": 1998, "maxYear": 2018 },
+      { "name": "Escape", "minYear": 2000 }
+    ],
+    "Chevrolet": [
+      { "name": "Silverado", "minYear": 1999 },
+      { "name": "Malibu", "minYear": 1997 }
+    ],
+    "Nissan": [
+      { "name": "Altima", "minYear": 1993 },
+      { "name": "Sentra", "minYear": 1990 }
+    ],
+    "BMW": [
+      { "name": "3 Series", "minYear": 1990 },
+      { "name": "5 Series", "minYear": 1990 }
+    ],
+    "Mercedes": [
+      { "name": "C-Class", "minYear": 1993 },
+      { "name": "E-Class", "minYear": 1993 }
+    ],
+    "Volkswagen": [
+      { "name": "Golf", "minYear": 1990 },
+      { "name": "Jetta", "minYear": 1990 }
+    ],
+    "Hyundai": [
+      { "name": "Elantra", "minYear": 1995 },
+      { "name": "Santa Fe", "minYear": 2001 }
+    ],
+    "Kia": [
+      { "name": "Sorento", "minYear": 2002 },
+      { "name": "Optima", "minYear": 2000 }
+    ],
+    "Subaru": [
+      { "name": "Outback", "minYear": 1995 },
+      { "name": "Impreza", "minYear": 1992 }
+    ],
+    "Tesla": [
+      { "name": "Model S", "minYear": 2012 },
+      { "name": "Model 3", "minYear": 2017 },
+      { "name": "Model X", "minYear": 2015 },
+      { "name": "Model Y", "minYear": 2020 }
+    ],
+    "Audi": [
+      { "name": "A3", "minYear": 1996 },
+      { "name": "A4", "minYear": 1994 },
+      { "name": "A6", "minYear": 1997 }
+    ],
+    "Mazda": [
+      { "name": "Mazda3", "minYear": 2004 },
+      { "name": "CX-5", "minYear": 2012 },
+      { "name": "CX-9", "minYear": 2007 }
+    ],
+    "Lexus": [
+      { "name": "RX", "minYear": 1998 },
+      { "name": "ES", "minYear": 1990 }
+    ],
+    "Acura": [
+      { "name": "MDX", "minYear": 2001 },
+      { "name": "RDX", "minYear": 2007 },
+      { "name": "TLX", "minYear": 2015 }
+    ],
+    "Dodge": [
+      { "name": "Charger", "minYear": 2006 },
+      { "name": "Challenger", "minYear": 2008 },
+      { "name": "Durango", "minYear": 1998 },
+      { "name": "Ram 1500", "minYear": 1994 }
+    ]
+  }
+}

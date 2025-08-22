@@ -25,5 +25,12 @@
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "strictTemplates": true
-  }
+  },
+  "exclude": [
+    "src/_unused/**",
+    "src/app/app.routes.ts",
+    "src/app/app.ts",
+    "src/app/claim-form/claim-form.ts",
+    "src/app/claims-list/claims-list.ts"
+  ]
 }

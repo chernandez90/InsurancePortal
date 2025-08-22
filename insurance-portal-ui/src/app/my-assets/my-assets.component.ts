@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AssetService, Asset } from '../services/asset.service';
 import { PolicyService, UserPolicy } from '../services/policy.service';
 import { SnackbarService } from '../shared/snackbar.service';
+import { VehicleService, VehicleCatalog } from '../services/vehicle.service';
 
 @Component({
   selector: 'app-my-assets',
@@ -298,6 +299,12 @@ export class MyAssetsComponent {
     'Hyundai',
     'Kia',
     'Subaru',
+    'Tesla',
+    'Audi',
+    'Mazda',
+    'Lexus',
+    'Acura',
+    'Dodge',
   ];
 
   modelsByMake: Record<
@@ -351,7 +358,42 @@ export class MyAssetsComponent {
       { name: 'Outback', minYear: 1995, maxYear: new Date().getFullYear() },
       { name: 'Impreza', minYear: 1992, maxYear: new Date().getFullYear() },
     ],
+    Tesla: [
+      { name: 'Model S', minYear: 2012, maxYear: new Date().getFullYear() },
+      { name: 'Model 3', minYear: 2017, maxYear: new Date().getFullYear() },
+      { name: 'Model X', minYear: 2015, maxYear: new Date().getFullYear() },
+      { name: 'Model Y', minYear: 2020, maxYear: new Date().getFullYear() },
+    ],
+    Audi: [
+      { name: 'A3', minYear: 1996, maxYear: new Date().getFullYear() },
+      { name: 'A4', minYear: 1994, maxYear: new Date().getFullYear() },
+      { name: 'A6', minYear: 1997, maxYear: new Date().getFullYear() },
+    ],
+    Mazda: [
+      { name: 'Mazda3', minYear: 2004, maxYear: new Date().getFullYear() },
+      { name: 'CX-5', minYear: 2012, maxYear: new Date().getFullYear() },
+      { name: 'CX-9', minYear: 2007, maxYear: new Date().getFullYear() },
+    ],
+    Lexus: [
+      { name: 'RX', minYear: 1998, maxYear: new Date().getFullYear() },
+      { name: 'ES', minYear: 1990, maxYear: new Date().getFullYear() },
+    ],
+    Acura: [
+      { name: 'MDX', minYear: 2001, maxYear: new Date().getFullYear() },
+      { name: 'RDX', minYear: 2007, maxYear: new Date().getFullYear() },
+      { name: 'TLX', minYear: 2015, maxYear: new Date().getFullYear() },
+    ],
+    Dodge: [
+      { name: 'Charger', minYear: 2006, maxYear: new Date().getFullYear() },
+      { name: 'Challenger', minYear: 2008, maxYear: new Date().getFullYear() },
+      { name: 'Durango', minYear: 1998, maxYear: new Date().getFullYear() },
+      { name: 'Ram 1500', minYear: 1994, maxYear: new Date().getFullYear() },
+    ],
   };
+
+  // fallback copies used when vehicle catalog fails to load
+  private fallbackMakes = [...this.vehicleMakes];
+  private fallbackModels = { ...this.modelsByMake };
 
   selectedMake = '';
   selectedModel = '';
@@ -361,9 +403,20 @@ export class MyAssetsComponent {
   constructor(
     private svc: AssetService,
     private policySvc: PolicyService,
-    private snack: SnackbarService
+    private snack: SnackbarService,
+    private vehicleSvc: VehicleService
   ) {
     this.load();
+    this.vehicleSvc.loadCatalog().subscribe({
+      next: (c: VehicleCatalog | null) => {
+        if (!c) return;
+        this.vehicleMakes = c.makes || this.vehicleMakes;
+        this.modelsByMake = c.modelsByMake || this.modelsByMake;
+      },
+      error: () => {
+        // keep existing hardcoded catalog
+      },
+    });
   }
 
   load() {

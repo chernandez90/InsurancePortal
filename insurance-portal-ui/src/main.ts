@@ -95,6 +95,14 @@ const routes: Routes = [
       ),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'beneficiaries/:id',
+    loadComponent: () =>
+      import('./app/beneficiaries/beneficiary-detail.component').then(
+        (c) => c.BeneficiaryDetailComponent
+      ),
+    canActivate: [AuthGuard],
+  },
   { path: '**', redirectTo: '/login' },
 ];
 

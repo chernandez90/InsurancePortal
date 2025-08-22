@@ -5,5 +5,20 @@
     "types": []
   },
   "files": ["src/main.ts"],
-  "include": ["src/**/*.d.ts"]
+  "include": ["src/**/*.d.ts"],
+  "exclude": [
+    "src/test.ts",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.spec.js",
+    "src/_unused/**",
+    "src/app/app.routes.ts",
+    "src/app/app.spec.ts",
+    "src/app/app.ts",
+    "src/app/claim-form/claim-form.ts",
+    "src/app/claim-form/claim-form.spec.ts",
+    "src/app/claims-list/claims-list.ts",
+    "src/app/claims-list/claims-list.spec.ts",
+    "src/app/claims-list/claims-list.component.ts-angular-inline--6.css"
+  ]
 }

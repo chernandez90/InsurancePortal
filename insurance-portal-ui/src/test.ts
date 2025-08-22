@@ -24,7 +24,8 @@ getTestBed().initTestEnvironment(
   platformBrowserDynamicTesting()
 );
 
-// Then we find all the tests.
-const context = require.context('./', true, /\.spec\.ts$/);
+// Then we find all the tests. Exclude archived specs under src/_unused at bundle time
+// so webpack doesn't attempt to include them in the test bundle.
+const context = require.context('./', true, /^\.\/(?!_unused\/).*\.spec\.ts$/);
 // And load the modules.
 context.keys().forEach(context);

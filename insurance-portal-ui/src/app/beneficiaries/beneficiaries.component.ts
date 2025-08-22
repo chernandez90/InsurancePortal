@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
@@ -13,7 +14,7 @@ interface Beneficiary {
 @Component({
   selector: 'app-beneficiaries',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="page">
       <h2>Beneficiaries</h2>
@@ -46,7 +47,9 @@ interface Beneficiary {
       <div *ngIf="list.length === 0">No beneficiaries yet.</div>
       <ul>
         <li *ngFor="let b of list">
-          <strong>{{ b.name }}</strong>
+          <a [routerLink]="['/beneficiaries', b.id]"
+            ><strong>{{ b.name }}</strong></a
+          >
           <span *ngIf="b.relationship"> — {{ b.relationship }}</span>
           <span *ngIf="b.percentage"> ({{ b.percentage }}%)</span>
           <button class="terminate" (click)="remove(b.id)">Remove</button>
