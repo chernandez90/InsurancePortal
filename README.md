@@ -18,8 +18,6 @@ We added a lightweight demo page to let reviewers explore the UI without signing
 - Open the demo: `https://{FRONTEND_URL}/demo` (or run locally at `http://localhost:4200/demo`)
 - Screenshot (demo):
 
-![Demo preview](insurance-portal-ui/public/assets/demo/demo-screenshot.png)
-
 The demo page shows sample policies, a recent claim, and quick actions for evaluating UX flows.
 
 ### Capturing screenshots & GIFs
